@@ -65,11 +65,12 @@ packages() {
   done
 	#${DNF} -y install ${PKGS[*]}
 	${GEM} install ${GEMS[*]}
+  ${ECHO} "set paste" >> /etc/vimrc
+  ${ECHO} 'if [ -f "/etc/bashrc.kali" ]; then . /etc/bashrc.kali; fi' >> /etc/bashrc
 }
 
 services() {
   ${SCTL} disable --now firewalld.service
-  ${SCTL} enable  --now docker.service
 }
 
 aliases() {
@@ -128,6 +129,7 @@ clone_repo() {
   cd /root/
   ${GIT} clone https://github.com/oxdeca/ctlabs.git
   ${MKDIR} -vp /tmp/public
+  ${CP} ctlabs/images/centos/c9/base/bashrc.kali /etc/
 }
 
 ctimages() {

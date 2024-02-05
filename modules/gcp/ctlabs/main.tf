@@ -15,6 +15,12 @@ provider "google" {
   zone    = try( var.project.zone )
 }
 
+provider "google-beta" {
+  project = try( var.project.id )
+  region  = try( var.project.region )
+  zone    = try( var.project.zone )
+}
+
 # -------------------------------------------------------------------------------------------
 
 #
@@ -24,11 +30,11 @@ provider "google" {
 module "net" {
   source = "../net"
 
-  nets = var.config.network
+  nets   = var.config.network
 }
 
 module "subnet" {
-  source = "../subnet"
+  source     = "../subnet"
 
   project    = var.project
   subnets    = var.config.subnet
@@ -42,14 +48,14 @@ module "subnet" {
 #
 
 module "fw_ingress" {
-  source = "../fw_ingress"
+  source     = "../fw_ingress"
 
   ingress    = var.config.firewall.ingress
   depends_on = [module.net]
 }
 
 module "fw_egress" {
-  source = "../fw_egress"
+  source     = "../fw_egress"
 
   egress     = var.config.firewall.egress
   depends_on = [module.net]
@@ -62,7 +68,7 @@ module "fw_egress" {
 #
 
 module "vm" {
-  source = "../vm"
+  source     = "../vm"
 
   project    = var.project
   vms        = var.config.vms

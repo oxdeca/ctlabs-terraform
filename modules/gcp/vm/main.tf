@@ -4,6 +4,8 @@
 # -----------------------------------------------------------------------------
 
 resource "google_compute_instance" "vm" {
+  provider = google-beta
+
   for_each = { for vm in var.vms : vm.name => vm }
 
   project                   = var.project.id
@@ -29,6 +31,17 @@ resource "google_compute_instance" "vm" {
 
   metadata = {
     enable-oslogin = true
+  }
+
+  scheduling {
+    preemptible                 = true
+    automatic_restart           = false
+    provisioning_model          = "SPOT"
+    instance_termination_action = "DELETE"
+    
+    max_run_duration {
+      seconds = 14400 
+    }
   }
   
   metadata_startup_script = try( file("${each.value.script}"), "" )
