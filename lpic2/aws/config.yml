@@ -1,0 +1,37 @@
+---
+
+# -----------------------------------------------------------------------------
+# File        : ctlabs-terraform/lpic2/aws/config.yml
+# Description : main configuration to provision lpic2 
+# -----------------------------------------------------------------------------
+
+# The project gets imported from the file ctlabs-terraform/aws.conf.yml 
+# which has the following format:
+# 
+#project:
+#  id     : <AWS_PROJECT_ID>
+#  user   : <AWS_USER>
+#  region : <AWS_REGION>
+#  zone   : <AWS_ZONE>
+#
+
+networks:
+  - name : net1
+    cidr : 172.25.0.0/16
+
+
+subnets:
+  - name : net1-lan1
+    net  : net1
+    cidr : 172.25.70.0/24
+
+vms:
+  - name   : vm-1
+    type   : t2.medium
+    image  : ami-049f8bd9ca71d1059      # centos 9
+    #image  : ami-0a3c3a20c09d6f377
+    net    : net1-lan1
+    script : ../ppvm.sh
+    nat    : true
+    labels :
+      ctlabs: lpic2

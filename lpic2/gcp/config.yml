@@ -1,0 +1,86 @@
+---
+
+# -----------------------------------------------------------------------------
+# File        : ctlabs-terraform/lpic2/config.yml
+# Description : main configuration to provision lpic2 
+# -----------------------------------------------------------------------------
+
+# The project gets imported from the file ctlabs-terraform/gcp.conf.yml 
+# which has the following format:
+# 
+#project:
+#  id     : <GCP_PROJECT_ID>
+#  user   : <GCP_USER>
+#  region : <GCP_REGION>
+#  zone   : <GCP_ZONE>
+#
+
+network:
+  - name : net1
+
+subnet:
+  - name : net1-lan1
+    net  : net1
+    cidr : 172.25.70.0/24
+firewall:
+  ingress:
+# net1
+    - name   : net1-ssh-iap
+      net    : net1
+      proto  : tcp
+      ports  : [22]
+      src    : [35.235.240.0/20]
+      prio   : 1000
+      action : allow
+      log    : true
+    - name   : net1-ctlabs-in
+      net    : net1
+      proto  : tcp
+      ports  : [4567]
+      src    : [0.0.0.0/0]
+      prio   : 1000
+      action : allow
+      log    : true
+  egress:
+# net1
+    - name   : net1-deny-all
+      net    : net1
+      proto  : all
+      ports  : []
+      dst    : [0.0.0.0/0]
+      prio   : 5000
+      action : deny
+      log    : true
+    - name   : net1-default-tcp
+      net    : net1
+      proto  : tcp
+      ports  : [22,53,80,443]
+      dst    : [0.0.0.0/0]
+      prio   : 1000
+      action : allow
+      log    : true
+    - name   : net1-default-udp
+      net    : net1
+      proto  : udp
+      ports  : [53]
+      dst    : [0.0.0.0/0]
+      prio   : 1000
+      action : allow
+      log    : true
+    - name   : net1-default-icmp
+      net    : net1
+      proto  : icmp
+      ports  : []
+      dst    : [0.0.0.0/0]
+      prio   : 1000
+      action : allow
+      log    : true
+vms:
+  - name   : vm-1
+    type   : e2-medium
+    image  : centos-stream-9-v20240110
+    net    : net1-lan1
+    script : ../ppvm.sh
+    nat    : true
+    labels :
+      ctlabs: lpic2
