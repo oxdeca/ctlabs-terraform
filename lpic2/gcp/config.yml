@@ -76,11 +76,12 @@ firewall:
       action : allow
       log    : true
 vms:
-  - name   : vm-1
-    type   : e2-medium
-    image  : centos-stream-9-v20240110
-    net    : net1-lan1
-    script : ../ppvm.sh
-    nat    : true
-    labels :
+  - name       : vm-1
+    type       : e2-medium
+    image      : centos-stream-9-v20240110
+    net        : net1-lan1
+    script     : ../ppvm.sh
+    lifespan   : 2 # in hours
+    nat        : true
+    labels     :
       ctlabs: lpic2

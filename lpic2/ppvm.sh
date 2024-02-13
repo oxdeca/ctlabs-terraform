@@ -54,6 +54,8 @@ CTIMGS=(
   '/root/ctlabs/images/centos/c9/base'
   '/root/ctlabs/images/centos/c9/frr'
   '/root/ctlabs/images/misc/kali'
+  '/root/ctlabs/images/debian/d11/base'
+  '/root/ctlabs/images/debian/d11/smbadc'
 )
 
 #
@@ -128,6 +130,7 @@ EOF
 clone_repo() {
   cd /root/
   ${GIT} clone https://github.com/oxdeca/ctlabs.git
+  ${GIT} clone https://github.com/oxdeca/ctlabs-ansible.git
   ${MKDIR} -vp /tmp/public
   ${CP} ctlabs/images/centos/c9/base/bashrc.kali /etc/
 }

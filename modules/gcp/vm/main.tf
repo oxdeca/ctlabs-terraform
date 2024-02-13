@@ -12,6 +12,7 @@ resource "google_compute_instance" "vm" {
   name                      = each.value.name
   machine_type              = each.value.type
   allow_stopping_for_update = true
+  labels                    = each.value.labels
 
   boot_disk {
     initialize_params {
@@ -38,9 +39,9 @@ resource "google_compute_instance" "vm" {
     automatic_restart           = false
     provisioning_model          = "SPOT"
     instance_termination_action = "DELETE"
-    
+
     max_run_duration {
-      seconds = 14400 
+      seconds = try( each.value.lifespan * 3600, 14400)
     }
   }
   
