@@ -22,6 +22,7 @@ module "networks" {
   source    = "../networks"
 
   networks  = var.config.networks
+  firewall  = var.config.firewall
 }
 
 module "subnets" {

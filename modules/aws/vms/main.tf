@@ -4,7 +4,7 @@
 # -----------------------------------------------------------------------------
 
 data "aws_subnet" "sub" {
-  for_each = { for vm in var.vms : vm.net => vm }
+  for_each = { for vm in var.vms : vm.name => vm }
 
   tags = { Name = each.value.net }
 }
@@ -57,7 +57,7 @@ resource "aws_instance" "vm" {
   key_name                    = var.ssh.name
   user_data                   = file( try("${each.value.script}", "" ) )
   tags                        = { Name = each.value.name }
-  subnet_id                   = data.aws_subnet.sub[each.value.net].id
+  subnet_id                   = data.aws_subnet.sub[each.value.name].id
   associate_public_ip_address = true
 
 #  network_interface {
