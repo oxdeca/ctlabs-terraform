@@ -22,7 +22,6 @@ module "networks" {
   source    = "../networks"
 
   networks  = var.config.networks
-  firewall  = var.config.firewall
 }
 
 module "subnets" {
@@ -36,7 +35,29 @@ module "subnets" {
 # -------------------------------------------------------------------------------------------
 
 #
-# VMs
+# FIREWALL
+#
+
+module "fw_ingress" {
+  source     = "../fw_ingress"
+
+  ingress    = var.config.firewall.ingress
+  networks   = var.config.networks
+  depends_on = [module.networks]
+}
+
+module "fw_egress" {
+  source     = "../fw_egress"
+
+  egress     = var.config.firewall.egress
+  networks   = var.config.networks
+  depends_on = [module.networks]
+}
+
+# -------------------------------------------------------------------------------------------
+
+#
+# VM's
 #
 module "vms" {
   source     = "../vms"

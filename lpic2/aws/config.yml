@@ -19,40 +19,58 @@ networks:
   - name : net1
     cidr : 172.25.0.0/16
 
+#  - name : net2
+#    cidr : 172.26.0.0/16
+
 subnets:
   - name : net1-lan1
     net  : net1
     cidr : 172.25.70.0/24
-    
-  - name : net1-lan2
-    net  : net1
-    cidr : 172.25.80.0/24
+
+#  - name : net2-lan1
+#    net  : net2
+#    cidr : 172.26.70.0/24
 
 firewall:
   ingress:
+# net1
     - name : net1-ssh
       net  : net1
       proto : tcp
       port  : 22
       src   : [0.0.0.0/0]
-
     - name : net1-ctlabs-in
       net  : net1
       proto : tcp
       port  : 4567
       src   : [0.0.0.0/0]
-
     - name : net1-ctlabs-proxy
       net  : net1
       proto : tcp
       port  : 8888
       src   : [0.0.0.0/0]
+
+# net2
+#    - name : net2-ssh
+#      net  : net2
+#      proto : tcp
+#      port  : 22
+#      src   : [0.0.0.0/0]
+
   egress:
+# net1
     - name : net1-any-out
       net  : net1
       proto : -1
       port  : 0
       dst   : [0.0.0.0/0]
+
+# net2
+#    - name : net2-any-out
+#      net  : net2
+#      proto : -1
+#      port  : 0
+#      dst   : [0.0.0.0/0]
 
 vms:
   - name   : vm-1
@@ -65,12 +83,12 @@ vms:
     labels :
       ctlabs: lpic2
 
-  - name   : vm-2
-    type   : t2.medium
-    image  : ami-049f8bd9ca71d1059      # centos 9
-    #image  : ami-0a3c3a20c09d6f377
-    net    : net1-lan2
-    script : ../ppvm.sh
-    nat    : true
-    labels :
-      ctlabs: lpic2
+#  - name   : vm-2
+#    type   : t2.medium
+#    image  : ami-049f8bd9ca71d1059      # centos 9
+#    #image  : ami-0a3c3a20c09d6f377
+#    net    : net2-lan1
+#    script : ../ppvm.sh
+#    nat    : true
+#    labels :
+#      ctlabs: lpic2
