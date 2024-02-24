@@ -32,6 +32,7 @@ resource "google_compute_instance" "vm" {
 
   metadata = {
     enable-oslogin = true
+    startup-script = try( file("${each.value.script}"), "" )
   }
 
   scheduling {
@@ -44,8 +45,11 @@ resource "google_compute_instance" "vm" {
       seconds = try( each.value.lifespan * 3600, 14400)
     }
   }
-  
-  metadata_startup_script = try( file("${each.value.script}"), "" )
 
 }
 
+#resource "null_resource" "cost_estimation1" {
+#  provisioner "local-exec" {
+#    command = "echo 'For Cost Estimation check: https://cloudbilling.googleapis.com/v2beta/services'"
+#  }
+#}

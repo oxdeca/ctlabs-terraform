@@ -81,7 +81,7 @@ vms:
     image      : centos-stream-9-v20240110
     net        : net1-lan1
     script     : ../ppvm.sh
-    lifespan   : 2 # in hours
+    lifespan   : 4 # in hours
     nat        : true
     labels     :
       ctlabs: lpic2
