@@ -252,10 +252,20 @@ set -g status-position bottom
 set -g status-justify left
 
 # split the window evenly into 4 parts
-new-session -d -s ctlabs
+new-session -d -s ctlabs-4
 split-window -v
 split-window -h -t 0
 split-window -h -t 2
+
+new-session -d -s ctlabs-8
+split-window -v
+split-window -h -t 0
+split-window -h -t 2
+split-window -v -t 3
+split-window -v -t 2
+split-window -v -t 1
+split-window -v -t 0
+
 
 EOF
 
