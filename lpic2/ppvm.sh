@@ -251,16 +251,12 @@ bind-key -T prefix m set -g mouse\; display 'Mouse: #{?mouse,ON,OFF}'
 set -g status-position bottom
 set -g status-justify left
 
-# split the window evenly into 4 parts
-new-session -d -s ctlabs-4
+# split the window evenly into 8 parts
+new-session -d -s ctlabs
 split-window -v
+split-window -h -t 1
 split-window -h -t 0
-split-window -h -t 2
 
-new-session -d -s ctlabs-8
-split-window -v
-split-window -h -t 0
-split-window -h -t 2
 split-window -v -t 3
 split-window -v -t 2
 split-window -v -t 1
