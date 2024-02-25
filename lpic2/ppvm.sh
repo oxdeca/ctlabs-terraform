@@ -190,7 +190,7 @@ packages() {
   ${ECHO} -en $BASHRC_KALI | ${SED} 's@ @\n@g' | ${BASE64} -d > /etc/bashrc.kali
   ${ECHO} "set paste" >> /etc/vimrc
 
-	for p in "${PKGS[@]}"; do
+  for p in "${PKGS[@]}"; do
     ${DNF} -y install "${p}"
   done
 
@@ -241,7 +241,7 @@ bind P paste-buffer
 bind-key -T copy-mode-vi v send-keys -X begin-selection
 bind-key -T copy-mode-vi y send-keys -X copy-selection
 bind-key -T copy-mode-vi r send-keys -X rectangle-toggle
-# Update default binding of `Enter` to also use copy-pipe
+# Update default binding of 'Enter' to also use copy-pipe
 unbind -T copy-mode-vi Enter
 bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel "xclip -selection c"
 bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "xclip -in -selection clipboard"
