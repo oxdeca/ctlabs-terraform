@@ -32,14 +32,14 @@ BASE64=/usr/bin/base64
 #
 LAB="lpic2.c9"
 PKGS=(
-  'epel-release'
-  'vim'
-  'htop'
   'tmux'
+  'vim'
   'git'
+  'graphviz'
+  'epel-release'
+  'htop'
   'ruby'
   'irb'
-  'graphviz'
   'podman-docker'
   'wireshark-cli'
   'tcpdump'
