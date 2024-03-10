@@ -36,7 +36,7 @@ firewall:
     - name   : net1-ctlabs-in
       net    : net1
       proto  : tcp
-      ports  : [4567]
+      ports  : [3000,4567,8080]
       src    : [0.0.0.0/0]
       prio   : 1000
       action : allow
@@ -78,9 +78,11 @@ firewall:
 vms:
   - name       : vm-1
     type       : e2-medium
-    image      : centos-stream-9-v20240110
+    image      : centos-stream-9-v20240213
+    #image      : debian-11-bullseye-v20240213
     net        : net1-lan1
     script     : ../ppvm.sh
+    spot       : true
     lifespan   : 4 # in hours
     nat        : true
     labels     :

@@ -24,13 +24,27 @@ provider "google-beta" {
 # -------------------------------------------------------------------------------------------
 
 #
+# Costs
+#
+
+module "costs" {
+  source = "../costs"
+
+  project = var.project
+  vms     = var.config.vms
+}
+
+# -------------------------------------------------------------------------------------------
+
+#
 # NETWORKS
 #
 
 module "net" {
   source = "../net"
 
-  nets   = var.config.network
+  nets       = var.config.network
+  depends_on = [module.costs]
 }
 
 module "subnet" {
@@ -72,6 +86,7 @@ module "vm" {
 
   project    = var.project
   vms        = var.config.vms
-  depends_on = [module.subnet]
+  depends_on = [module.net, module.subnet]
 }
 
+# -------------------------------------------------------------------------------------------

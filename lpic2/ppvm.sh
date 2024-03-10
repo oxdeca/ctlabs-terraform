@@ -185,6 +185,10 @@ Cg=='
 # FUNCTIONS
 # -----------------------------------------------------------------------------
 #
+os_update() {
+  ${DNF} -y update
+}
+
 packages() {
   ${ECHO} 'if [ -f "/etc/bashrc.kali" ]; then . /etc/bashrc.kali; fi' >> /etc/bashrc
   ${ECHO} -en $BASHRC_KALI | ${SED} 's@ @\n@g' | ${BASE64} -d > /etc/bashrc.kali
@@ -290,9 +294,10 @@ ctimages() {
 #
 aliases
 tmux
-prerequisites
 packages
 services
+#os_update
+setenforce permissive
 
 
 clone_repo

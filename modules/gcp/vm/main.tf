@@ -35,17 +35,19 @@ resource "google_compute_instance" "vm" {
     startup-script = try( file("${each.value.script}"), "" )
   }
 
-  scheduling {
-    preemptible                 = true
-    automatic_restart           = false
-    provisioning_model          = "SPOT"
-    instance_termination_action = "DELETE"
+  dynamic scheduling {
+    for_each = each.value.spot ? toset([1]) : toset([])
+    content {
+      preemptible                 = true
+      automatic_restart           = false
+      provisioning_model          = "SPOT"
+      instance_termination_action = "DELETE"
 
-    max_run_duration {
-      seconds = try( each.value.lifespan * 3600, 14400)
+      max_run_duration {
+        seconds = try( each.value.lifespan * 3600, 14400)
+      }
     }
   }
-
 }
 
 #resource "null_resource" "cost_estimation1" {
