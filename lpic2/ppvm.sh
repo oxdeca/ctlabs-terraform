@@ -46,6 +46,7 @@ PKGS=(
   'nc'
   'perf'
   'bpftrace'
+  "kernel-modules-extra-$(uname -r)"
 )
 
 GEMS=(
