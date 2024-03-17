@@ -27,12 +27,12 @@ provider "google-beta" {
 # Costs
 #
 
-module "costs" {
-  source = "../costs"
-
-  project = var.project
-  vms     = var.config.vms
-}
+#module "costs" {
+#  source = "../costs"
+#
+#  project = var.project
+#  vms     = var.config.vms
+#}
 
 # -------------------------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ module "net" {
   source = "../net"
 
   nets       = var.config.network
-  depends_on = [module.costs]
+  #depends_on = [module.costs]
 }
 
 module "subnet" {
