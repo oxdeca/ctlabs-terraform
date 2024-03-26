@@ -7,7 +7,7 @@ resource "google_storage_bucket_object" "code" {
   for_each = { for func in var.functions : func.name => func }
 
   name   = each.value.name
-  source = "${each.value.object}.zip"
+  source = each.value.source
   bucket = each.value.bucket
 }
 

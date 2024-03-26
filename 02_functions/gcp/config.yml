@@ -30,7 +30,8 @@ functions:
     runtime  : python39
     mem      : 128                       # min mem = 128
     bucket   : ctlabs_bucket_functions
-    object   : hello_func/hello_http
+    object   : hello_http
+    source   : hello_func/hello_http.zip
     http     : true
     entry    :
     labels   :
