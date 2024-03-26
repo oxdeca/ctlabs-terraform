@@ -1,0 +1,59 @@
+---
+
+# -----------------------------------------------------------------------------
+# File        : ctlabs-terraform/02_buckets/config.yml
+# Description : main configuration to provision buckets
+# -----------------------------------------------------------------------------
+
+# The project gets imported from the file ctlabs-terraform/gcp.conf.yml 
+# which has the following format:
+# 
+#project:
+#  id     : <GCP_PROJECT_ID>
+#  user   : <GCP_USER>
+#  region : <GCP_REGION>
+#  zone   : <GCP_ZONE>
+#
+
+services:
+  - cloudfunctions.googleapis.com
+  - cloudbuild.googleapis.com
+  - artifactregistry.googleapis.com
+
+buckets:
+  - name     : ctlabs_bucket_functions
+    location : us
+
+functions:
+  - name     : hello_http
+    desc     : a test cloud function
+    runtime  : python39
+    mem      : 128                       # min mem = 128
+    bucket   : ctlabs_bucket_functions
+    object   : hello_func/hello_http
+    http     : true
+    entry    :
+    labels   :
+    env_vars :
+
+network:
+  - name: net1
+
+subnet: 
+  - name : net1-lan2
+    net  : net1
+    cidr : 192.168.67.0/24
+
+vms: 
+  - name     : vm-1
+    type     : e2-micro
+    image    : centos-stream-9-v20240213
+    net      : net1-lan2
+    spot     : true
+    lifespan : 2
+    nat      : false
+    labels   :
+
+firewall:
+  ingress: []
+  egress : []

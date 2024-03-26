@@ -47,6 +47,7 @@ PKGS=(
   'perf'
   'bpftrace'
   "kernel-modules-extra-$(uname -r)"
+  'python3-pip'
 )
 
 GEMS=(
@@ -213,6 +214,9 @@ aliases() {
   alias vi="/usr/bin/vim"
   alias pva=". ~/virtenv/bin/activate"
   alias pve="deactivate"
+  alias kubectl="/usr/bin/k3s kubectl"
+  alias crictl="/usr/bin/k3s crictl"
+  alias ctr="/usr/bin/k3s ctr"
 
   function enter() {
     docker exec -it -w ~/ ${1} bash
@@ -270,6 +274,14 @@ split-window -v -t 0
 
 EOF
 
+}
+
+ansible() {
+  ${PYTHON} -mpip install pip --upgrade
+  ${PYTHON} -m venv ~/virtenv
+  . ~/virtenv/bin/activate
+  python -mpip install pip --upgrade
+  python -mpip install ansible
 }
 
 clone_repo() {

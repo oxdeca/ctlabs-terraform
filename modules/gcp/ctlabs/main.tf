@@ -24,6 +24,19 @@ provider "google-beta" {
 # -------------------------------------------------------------------------------------------
 
 #
+# Services
+#
+module "services" {
+  source = "../services"
+
+  services = var.config.services
+  project  = var.project
+}
+
+
+# -------------------------------------------------------------------------------------------
+
+#
 # Costs
 #
 
@@ -87,6 +100,31 @@ module "vm" {
   project    = var.project
   vms        = var.config.vms
   depends_on = [module.net, module.subnet]
+}
+
+# -------------------------------------------------------------------------------------------
+
+#
+# Storage
+#
+
+module "buckets" {
+  source = "../buckets"
+
+  buckets = var.config.buckets
+}
+
+# -------------------------------------------------------------------------------------------
+
+#
+# Functions
+#
+
+module "functions" {
+  source = "../functions"
+
+  functions  = var.config.functions
+  depends_on = [module.buckets, module.services]
 }
 
 # -------------------------------------------------------------------------------------------

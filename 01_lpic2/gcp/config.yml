@@ -36,7 +36,7 @@ firewall:
     - name   : net1-ctlabs-in
       net    : net1
       proto  : tcp
-      ports  : [3000,4567,8080,8081,8082]
+      ports  : [80,443,3000,4567,8080,8081,8082]
       src    : [0.0.0.0/0]
       prio   : 1000
       action : allow
