@@ -58,6 +58,7 @@ GEMS=(
 
 CTIMGS=(
   '/root/ctlabs/images/centos/c9/base'
+  '/root/ctlabs/images/centos/c9/ctrl'
   '/root/ctlabs/images/centos/c9/frr'
   '/root/ctlabs/images/misc/kali'
   '/root/ctlabs/images/debian/d11/base'
