@@ -29,7 +29,7 @@ provider "google-beta" {
 module "services" {
   source = "../services"
 
-  services = var.config.services
+  services = try( var.config.services, [] )
   project  = var.project
 }
 
@@ -97,8 +97,8 @@ module "fw_egress" {
 module "vm" {
   source     = "../vm"
 
-  project    = var.project
-  vms        = var.config.vms
+  project    = try( var.project, [] )
+  vms        = try( var.config.vms, [] )
   depends_on = [module.net, module.subnet]
 }
 
@@ -111,7 +111,7 @@ module "vm" {
 module "buckets" {
   source = "../buckets"
 
-  buckets = var.config.buckets
+  buckets = try( var.config.buckets, [] )
 }
 
 # -------------------------------------------------------------------------------------------
@@ -123,7 +123,7 @@ module "buckets" {
 module "functions" {
   source = "../functions"
 
-  functions  = var.config.functions
+  functions  = try( var.config.functions, [] )
   depends_on = [module.buckets, module.services]
 }
 

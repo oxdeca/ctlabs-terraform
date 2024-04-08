@@ -30,6 +30,10 @@ resource "google_compute_instance" "vm" {
     }
   }
 
+  advanced_machine_features {
+    enable_nested_virtualization = try( each.value.nested, false )
+  }
+
   metadata = {
     enable-oslogin = true
     startup-script = try( file("${each.value.script}"), "" )
