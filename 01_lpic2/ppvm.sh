@@ -10,6 +10,7 @@
 # -----------------------------------------------------------------------------
 #
 CP=/usr/bin/cp
+MV=/usr/bin/mv
 GEM=/usr/bin/gem
 GIT=/usr/bin/git
 PIP=/usr/bin/pip3
@@ -17,6 +18,7 @@ DNF=/usr/bin/dnf
 SED=/usr/bin/sed
 BASH=/bin/bash
 ECHO=/usr/bin/echo
+CURL=/usr/bin/curl
 SCTL=/usr/bin/systemctl
 CHMOD=/usr/bin/chmod
 MKDIR=/usr/bin/mkdir
@@ -218,6 +220,7 @@ aliases() {
   alias kubectl="/usr/bin/k3s kubectl"
   alias crictl="/usr/bin/k3s crictl"
   alias ctr="/usr/bin/k3s ctr"
+  alias kc=kubectl
 
   function enter() {
     docker exec -it -w ~/ ${1} bash
@@ -301,6 +304,11 @@ ctimages() {
   done
 }
 
+kind() {
+  ${CURL} -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64 && ${MV} ./kind /usr/bin/kind && chmod 0750 /usr/bin/kind
+}
+
+
 
 # -----------------------------------------------------------------------------
 # MAIN
@@ -313,7 +321,7 @@ services
 #os_update
 setenforce permissive
 
-
 clone_repo
 ctimages
+kind
 #ctlab ${LAB}
