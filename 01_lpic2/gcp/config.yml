@@ -87,3 +87,27 @@ vms:
     nat        : true
     labels     :
       ctlabs: lpic2
+
+#  - name       : vm-2
+#    type       : e2-medium
+#    image      : image-1
+#    net        : net1-lan1
+#    spot       : true
+#    lifespan   : 6 # in hours
+#    nat        : true
+#    labels     :
+#      ctlabs: lpic2
+
+
+#  - name       : vm-2
+#    type       : n2-highcpu-4
+#    image      : centos-stream-9-v20240213
+#    #image      : debian-11-bullseye-v20240213
+#    net        : net1-lan1
+#    script     : ../ppvm.sh
+#    spot       : true
+#    lifespan   : 6 # in hours
+#    nested     : true
+#    nat        : true
+#    labels     :
+#      ctlabs: riscv6

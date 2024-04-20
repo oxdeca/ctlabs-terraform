@@ -3,11 +3,11 @@
 PROJECT=$( cat gcp.conf.yml | awk -F: '{ if ( $1 ~ / id / ) print $2 }' | sed 's@ @@' )
 USER=$( cat gcp.conf.yml | awk -F: '{ if ( $1 ~ / user / ) print $2 }' | sed 's@ @@' )
 
-if [ -n "${PROJECT}" ]; then
+if [ -n "${USER}" ]; then
   gcloud config set account ${USER}
 fi
 
-if [ -n "${USER}" ]; then
+if [ -n "${PROJECT}" ]; then
   gcloud config set project ${PROJECT}
 fi
 
