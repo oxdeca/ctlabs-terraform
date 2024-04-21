@@ -62,9 +62,11 @@ CTIMGS=(
   '/root/ctlabs/images/centos/c9/base'
   '/root/ctlabs/images/centos/c9/ctrl'
   '/root/ctlabs/images/centos/c9/frr'
-  '/root/ctlabs/images/misc/kali'
+  '/root/ctlabs/images/kali/base'
+  '/root/ctlabs/images/kali/ctf'
   '/root/ctlabs/images/debian/d11/base'
   '/root/ctlabs/images/debian/d11/smbadc'
+  '/root/ctlabs/images/centos/xv6'
 )
 
 BASHRC_KALI='
@@ -271,10 +273,13 @@ split-window -h -t 1
 split-window -h -t 0
 
 split-window -v -t 3
+resize-pane  -U 50
 split-window -v -t 2
+resize-pane  -U 50
 split-window -v -t 1
+resize-pane  -U 50
 split-window -v -t 0
-
+resize-pane  -U 50
 
 EOF
 
