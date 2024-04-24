@@ -50,6 +50,7 @@ PKGS=(
   'bpftrace'
   "kernel-modules-extra-$(uname -r)"
   'python3-pip'
+  'ipvsadm'
 )
 
 GEMS=(
@@ -66,7 +67,8 @@ CTIMGS=(
   '/root/ctlabs/images/kali/ctf'
   '/root/ctlabs/images/debian/d11/base'
   '/root/ctlabs/images/debian/d11/smbadc'
-  '/root/ctlabs/images/centos/xv6'
+  '/root/ctlabs/images/owasp/zap'
+  '/root/ctlabs/images/centos/c9/xv6'
 )
 
 BASHRC_KALI='
@@ -309,6 +311,11 @@ ctimages() {
   done
 }
 
+selinux() {
+  setenforce permissive
+  ${SED} -ri 's@(SELINUX=).*@\1permissive@' /etc/selinux/config
+}
+
 kind() {
   ${CURL} -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64 && ${MV} ./kind /usr/bin/kind && chmod 0750 /usr/bin/kind
 }
@@ -324,9 +331,8 @@ tmux
 packages
 services
 #os_update
-setenforce permissive
+selinux
 
+kind
 clone_repo
 ctimages
-kind
-#ctlab ${LAB}
