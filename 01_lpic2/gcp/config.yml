@@ -36,7 +36,7 @@ firewall:
     - name   : net1-ctlabs-in
       net    : net1
       proto  : tcp
-      ports  : [80,443,3000,4567,8080,8081,8082]
+      ports  : [80,443,3000,4567,8080,8081,8082,8090,8443]
       src    : [0.0.0.0/0]
       prio   : 1000
       action : allow
@@ -62,7 +62,7 @@ firewall:
     - name   : net1-default-udp
       net    : net1
       proto  : udp
-      ports  : [53]
+      ports  : [53,123,1194]
       dst    : [0.0.0.0/0]
       prio   : 1000
       action : allow
@@ -78,6 +78,7 @@ firewall:
 vms:
   - name       : vm-1
     type       : e2-medium
+    #image      : ctlabs-2024-04-21
     image      : centos-stream-9-v20240213
     #image      : debian-11-bullseye-v20240213
     net        : net1-lan1
