@@ -317,7 +317,7 @@ selinux() {
 }
 
 kind() {
-  ${CURL} -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64 && ${MV} ./kind /usr/bin/kind && chmod 0750 /usr/bin/kind
+  ${CURL} -sLo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64 && ${MV} ./kind /usr/bin/kind && chmod 0750 /usr/bin/kind
 }
 
 

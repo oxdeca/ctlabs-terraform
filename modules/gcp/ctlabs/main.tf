@@ -128,3 +128,15 @@ module "functions" {
 }
 
 # -------------------------------------------------------------------------------------------
+
+#
+# BigQuery
+#
+
+module "bigquery" {
+  source = "../bigquery"
+
+  bigquery   = try( var.config.bigquery, [] )
+  depends_on = [module.services]
+}
+
