@@ -30,7 +30,7 @@ module "services" {
   source = "../services"
 
   services = try( var.config.services, [] )
-  project  = var.project
+  project  = try( var.project, [] )
 }
 
 
@@ -56,15 +56,15 @@ module "services" {
 module "net" {
   source = "../net"
 
-  nets       = var.config.network
+  nets       = try( var.config.network, [] )
   #depends_on = [module.costs]
 }
 
 module "subnet" {
   source     = "../subnet"
 
-  project    = var.project
-  subnets    = var.config.subnet
+  project    = try( var.project, [] )
+  subnets    = try( var.config.subnet, [] )
   depends_on = [module.net]
 }
 
@@ -77,14 +77,14 @@ module "subnet" {
 module "fw_ingress" {
   source     = "../fw_ingress"
 
-  ingress    = var.config.firewall.ingress
+  ingress    = try( var.config.firewall.ingress, [] )
   depends_on = [module.net]
 }
 
 module "fw_egress" {
   source     = "../fw_egress"
 
-  egress     = var.config.firewall.egress
+  egress     = try( var.config.firewall.egress, [] )
   depends_on = [module.net]
 }
 

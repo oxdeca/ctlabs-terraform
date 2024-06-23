@@ -12,7 +12,7 @@ resource "google_storage_bucket" "bucket" {
   labels        = each.value.labels
 }
 
-resource "google_storage_bucket_iam_binding" {
+resource "google_storage_bucket_iam_binding" "iam" {
   for_each = { for binding in var.buckets[google_storage_bucket.bucket.name].bindings : binding.role => binding }
 
   bucket     = each.value.name
