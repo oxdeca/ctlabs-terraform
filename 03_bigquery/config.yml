@@ -93,6 +93,7 @@ bigquery:
         constraints:
           primary_key: [ emp_no, title, from_date ]
       - name: salaries
+        access: []
         labels:
         schema:
           - { name: emp_no,    type: INTEGER }

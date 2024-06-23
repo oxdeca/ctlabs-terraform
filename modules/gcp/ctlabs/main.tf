@@ -136,7 +136,9 @@ module "functions" {
 module "bigquery" {
   source = "../bigquery"
 
+  project    = try( var.project, [] )
   bigquery   = try( var.config.bigquery, [] )
+
   depends_on = [module.services]
 }
 
