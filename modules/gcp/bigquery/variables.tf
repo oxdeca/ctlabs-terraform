@@ -3,6 +3,5 @@
 # Description : bigquery module variables
 # -----------------------------------------------------------------------------
 
-variable project  { type = any }
-variable datasets { type = any }
-variable tables   { type = any }
+variable project     { type = any }
+variable bigquery    { type = any }

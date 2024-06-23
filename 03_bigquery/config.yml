@@ -1,8 +1,8 @@
 ---
 
 # -----------------------------------------------------------------------------
-# File        : ctlabs-terraform/lpic2/config.yml
-# Description : main configuration to provision lpic2 
+# File        : ctlabs-terraform/03_bigquery/config.yml
+# Description : main configuration to provision bigquery 
 # -----------------------------------------------------------------------------
 
 defaults:
@@ -18,100 +18,110 @@ defaults:
         owner  : me
         project: project_1
 
-
 bigquery:
-  datasets:
-    - name    : ds1
-      friendly: ds1 db
-    - name: ds2
-    - name: event_horizon
-    - name: wonderland
-    - name: 9sf
-    - name: 9sf_prod
-    - name: 9sf_staging
-    - name: DA_8010_FCA_Data_Request_2024
-    - name: adjust_raw_data
-    - name: adjust_raw_data_old_schema
-    - name: alliliate_marketing_internal_reports
-    - name: airship
-
-  tables:
-    # -----------------------------------------------------------------------------
-    # TABLE ds1.t1
-    # -----------------------------------------------------------------------------
-    - name: ds1.t1
-      labels:
-        owner: winter
-      schema:
-        - { name: accountId, type: STRING, description: MT5 account login id }
-        - { name: orderId, type: STRING, description: MT5 order identifier }
-        - { name: clientStartTime, type: TIMESTAMP, description : Timestamp when the user hit the button and when the VWAP price was captured }
-        - { name: requestedPrice, type: FLOAT, description: VWAP price user saw when hitting the button }
-        - { name: executedPrice, type: FLOAT, description : The price by which the order is executed }
-        - { name: lots, type: FLOAT, description: The number of lots user has traded }
-        - { name: instrument, type: STRING, description: Instrument symbol that the user has traded }
-        - { name: direction, type: STRING, description: sell or buy }
-        - { name: roundTripDurationMicros, type: INTEGER, description: Difference when the request was sent and the response was received expressed in microseconds }
-        - { name: platform, type: STRING, description: Platform used by client to plae the trade }
-        - { name: executionEngine, type: STRING, description: Engine used to execute the trade }
-        - { name: ip, type: STRING, description: IP of the user who created the order }
-        - { name: oandaAgent, type: STRING, description: Oanda agent that is used in creating the order }
-        - { name: oneId, type: STRING, description: oneId of the client who created the order }
-        - { name: group, type: STRING, description: Group of the client who placed the order }
-        - { name: clientReceivedTime, type: TIMESTAMP, description: The time client receives an Order execution confirmation }
-        - { name: engineExecutionTime, type: TIMESTAMP, description: The order execution time returned from trding engine }
-    # -----------------------------------------------------------------------------
-    # TABLE ds2.t1
-    # -----------------------------------------------------------------------------
-    - name: ds2.t1
-      schema:
-        - { name: id, type: STRING, description: another field }
-        - { name: firstname, type: STRING, description: the first name }
-        - { name: lastname, type: STRING, description: the last name }
-    - name: ds2.t2
-    - name: event_horizon.winter
-    - name: wonderland.soso
-    - name: wonderland.fantasia
-    - name: wonderland.hades
-
-    - name: 9sf.address
-    - name: 9sf.app_unavailable
-    - name: 9sf.auth0_error
-    - name: 9sf.callback
-    - name: 9sf.callback2
-    - name: 9sf.check_rff
-    - name: 9sf.citizenship
-    - name: 9sf.click
-    - name: 9sf.click_continue_button
-    - name: 9sf.click_continue_buttonfundefined
-    - name: 9sf.click_go_back
-    - name: 9sf.click_go_back_link
-
-
-  # -----------------------------------------------------------------------------
-  # ACCESS RULES
-  # -----------------------------------------------------------------------------
-  access:
-    datasets:
-      - name   : ds1
-        role   : roles/bigquery.user
+  # ---------------------------------------------------------------------------
+  # DATASET employees_db
+  # ---------------------------------------------------------------------------
+  employees_db:
+    friendly : sample employees database
+    desc     : "a sample database: https://www3.ntu.edu.sg/home/ehchua/programming/sql/SampleDatabases.html"
+    destroy  : true
+    location : us-east1
+    labels   :
+      owner: analysts
+    access:
+      - role   : roles/bigquery.user
         members:
           - "group:devs@acedxo.com"
-      - name   : ds1
-        role   : roles/bigquery.dataViewer
+      - role   : roles/bigquery.dataViewer
         members:
           - "group:finance-and-accounting@acedxo.com"
           - "group:devs@acedxo.com"
     tables:
-      - name   : ds1.t1
-        role   : roles/bigquery.dataViewer
-        members:
-          - "group:new-group@acedxo.com"
-      - name   : ds2.t2
-        role   : roles/bigquery.dataViewer
-        members:
-          - "group:new-group@acedxo.com"
-      - name   : ds2.t2
-        role   : roles/bigquery.dataOwner
-        members:
-          - "group:devs@acedxo.com"
+      - name: employees
+        access:
+          - role   : roles/bigquery.dataViewer
+            members:
+              - "group:new-group@acedxo.com"
+        labels:
+          owner: michael
+        schema:
+          - { name: emp_no,     type: INTEGER }
+          - { name: birth_date, type: DATE    }
+          - { name: first_name, type: STRING  }
+          - { name: last_name,  type: STRING  }
+          - { name: gender,     type: STRING  }
+          - { name: hire_date,  type: DATE    }
+        constraints:
+          primary_key: [ emp_no ]
+      - name: departments
+        access: []
+        labels:
+        schema:
+          - { name: dept_no,   type: STRING }
+          - { name: dept_name, type: STRING }
+        constraints:
+          primary_key: [ dept_no ]
+      - name: dept_emp
+        access: []
+        labels:
+        schema:
+          - { name: emp_no,    type: INTEGER }
+          - { name: dept_no,   type: STRING  }
+          - { name: from_date, type: DATE    }
+          - { name: to_date,   type: DATE    }
+        constraints:
+          primary_key: [ emp_no, dept_no ]
+      - name: dept_manager
+        access: []
+        labels:
+        schema:
+          - { name: dept_no,   type: STRING  }
+          - { name: emp_no,    type: INTEGER }
+          - { name: from_date, type: DATE    }
+          - { name: to_date,   type: DATE    }
+        constraints:
+          primary_key: [ emp_no, dept_no ]
+      - name: title
+        access: []
+        labels:
+        schema:
+          - { name: emp_no,    type: INTEGER }
+          - { name: title,     type: STRING  }
+          - { name: from_date, type: DATE    }
+          - { name: to_date,   type: DATE    }
+        constraints:
+          primary_key: [ emp_no, title, from_date ]
+      - name: salaries
+        labels:
+        schema:
+          - { name: emp_no,    type: INTEGER }
+          - { name: salary,    type: INTEGER }
+          - { name: from_date, type: DATE    }
+          - { name: to_date,   type: DATE    }
+        constraints:
+          primary_key: [ emp_no, from_date ]
+
+  # ---------------------------------------------------------------------------
+  # DATASET basic_bq
+  # ---------------------------------------------------------------------------
+  basic_bq:
+    friendly: foo
+    destroy: true
+    location: us-east1
+    access: []
+    labels:
+      owner: dba
+    tables:
+      - name: bar
+        access: []
+        labels:
+          env      : devops
+          billable : true
+          owner    : janesmith
+        schema:
+          - { name: fullVisitorId,  type: STRING  }
+          - { name: visitNumber,    type: INTEGER }
+          - { name: visitId,        type: INTEGER }
+          - { name: visitStartTime, type: INTEGER }
+          - { name: fullDate,       type: DATE    }
