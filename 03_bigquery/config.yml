@@ -43,6 +43,9 @@ bigquery:
           - role   : roles/bigquery.dataViewer
             members:
               - "group:new-group@acedxo.com"
+          - role   : roles/bigquery.dataEditor
+            members:
+              - "group:devs@acedxo.com"
         labels:
           owner: michael
         schema:

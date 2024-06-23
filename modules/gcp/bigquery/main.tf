@@ -55,7 +55,7 @@ resource "google_bigquery_dataset_iam_binding" "dataset_access" {
 }
 
 resource "google_bigquery_table_iam_binding" "table_access" {
-  for_each = { for access in local.table_access : "${access.dataset_id}.${access.table_id}" => access }
+  for_each = { for access in local.table_access : "${access.dataset_id}.${access.table_id}.${access.role}" => access }
 
   dataset_id = each.value.dataset_id
   table_id   = each.value.table_id
