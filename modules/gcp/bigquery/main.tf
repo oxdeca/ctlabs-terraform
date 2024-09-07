@@ -5,8 +5,8 @@
 
 locals {
   tables         = flatten( [ for dsk, dsv in var.bigquery : [ for table  in dsv.tables : merge( { dataset_id = dsk, table_id = table.name }, table ) ] ] )
-  table_access   = flatten( [ for dsk, dsv in var.bigquery : [ for table  in dsv.tables : [ for access in table.access : merge( { dataset_id = dsk, table_id = table.name }, access ) ] ] ] )
-  dataset_access = flatten( [ for dsk, dsv in var.bigquery : [ for access in dsv.access : merge( { dataset_id = dsk }, access ) ] ] )
+  table_access   = flatten( [ for dsk, dsv in var.bigquery : [ for table  in dsv.tables : [ for access in try( table.access, [] ) : merge( { dataset_id = dsk, table_id = table.name }, access ) ] ] ] )
+  dataset_access = flatten( [ for dsk, dsv in var.bigquery : [ for access in try( dsv.access, [] ) : merge( { dataset_id = dsk }, access ) ] ] )
 }
 
 resource "google_bigquery_dataset" "ds" {
@@ -30,7 +30,7 @@ resource "google_bigquery_table" "tables" {
   deletion_protection = try( each.value.delete, false )
   #expiration_time     = try( each.value.schema, 1000*1000 )
   schema              = try( "${jsonencode(each.value.schema)}", null )
-  labels              = try( each.value.labels )
+  labels              = try( each.value.labels, null )
 
   dynamic table_constraints {
     for_each = lookup(each.value, "constraints", [])

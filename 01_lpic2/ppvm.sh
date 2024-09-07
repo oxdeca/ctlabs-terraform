@@ -51,6 +51,8 @@ PKGS=(
   "kernel-modules-extra-$(uname -r)"
   'python3-pip'
   'ipvsadm'
+  'qemu-img'
+  'cloud-utils-growpart'
 )
 
 GEMS=(

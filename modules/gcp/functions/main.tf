@@ -21,9 +21,9 @@ resource "google_cloudfunctions_function" "func" {
   available_memory_mb   = each.value.mem
   source_archive_bucket = each.value.bucket
   source_archive_object = each.value.object
-  trigger_http          = each.value.http
-  entry_point           = each.value.entry
+  trigger_http          = try( each.value.http,     false )
+  entry_point           = try( each.value.entry,    null  )
 
-  labels                = each.value.labels
-  environment_variables = each.value.env_vars
+  labels                = try( each.value.labels,   null )
+  environment_variables = try( each.value.env_vars, null )
 }

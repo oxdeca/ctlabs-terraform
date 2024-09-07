@@ -8,8 +8,8 @@ resource "google_storage_bucket" "bucket" {
 
   name          = each.value.name
   location      = each.value.location
-  storage_class = each.value.storage_class
-  labels        = each.value.labels
+  storage_class = try( each.value.class,  null )
+  labels        = try( each.value.labels, null )
 }
 
 #resource "google_storage_bucket_iam_binding" "iam" {
