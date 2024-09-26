@@ -138,8 +138,8 @@ vms:
 #    #image      : debian-11-bullseye-v20240213
 #    net        : net1-lan1
 #    script     : ../ppvm.sh
-#    spot       : true
-#    lifespan   : 6 # in hours
+#    spot       :
+#      lifespan   : 6 # in hours
 #    nested     : true
 #    nat        : true
 #    labels     :

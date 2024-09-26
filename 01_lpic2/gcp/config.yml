@@ -86,8 +86,8 @@ vms:
     #image      : debian-11-bullseye-v20240213
     net        : net1-lan1
     #script     : ../ppvm.sh
-    spot       : true
-    lifespan   : 6 # in hours
+    spot       : 
+      lifespan   : 6 # in hours
     nat        : true
     disks      :
       - name: boot
@@ -98,8 +98,8 @@ vms:
 #    type       : e2-medium
 #    image      : image-1
 #    net        : net1-lan1
-#    spot       : true
-#    lifespan   : 6 # in hours
+#    spot       :
+#      lifespan   : 6 # in hours
 #    nat        : true
 #    labels     :
 #      ctlabs: lpic2
@@ -111,8 +111,8 @@ vms:
 #    #image      : debian-11-bullseye-v20240213
 #    net        : net1-lan1
 #    script     : ../ppvm.sh
-#    spot       : true
-#    lifespan   : 6 # in hours
+#    spot       :
+#      lifespan   : 6 # in hours
 #    nested     : true
 #    nat        : true
 #    labels     :

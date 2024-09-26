@@ -50,8 +50,8 @@ vms:
     type     : e2-micro
     image    : centos-stream-9-v20240213
     net      : net1-lan2
-    spot     : true
-    lifespan : 2
+    spot     :
+      lifespan : 2
     nat      : false
     disks    :
       - name: boot
