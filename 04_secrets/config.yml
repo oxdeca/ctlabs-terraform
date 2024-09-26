@@ -1,0 +1,146 @@
+---
+
+# -----------------------------------------------------------------------------
+# File        : ctlabs-terraform/secrets/config.yml
+# Description : main configuration to provision secrets
+# -----------------------------------------------------------------------------
+
+# The project gets imported from the file ctlabs-terraform/gcp.conf.yml
+# which has the following format:
+#
+#project:
+#  id     : <GCP_PROJECT_ID>
+#  user   : <GCP_USER>
+#  region : <GCP_REGION>
+#  zone   : <GCP_ZONE>
+#
+
+services:
+  - compute.googleapis.com
+  - secretmanager.googleapis.com
+  - iam.googleapis.com
+  - cloudresourcemanager.googleapis.com
+
+network:
+  - name : net1
+
+subnet:
+  - name : net1-lan1
+    net  : net1
+    cidr : 172.25.70.0/24
+firewall:
+  ingress:
+# net1
+    - name   : net1-ssh-iap
+      net    : net1
+      proto  : tcp
+      ports  : [22]
+      src    : [35.235.240.0/20]
+      prio   : 1000
+      action : allow
+      log    : true
+    - name   : net1-ctlabs-in
+      net    : net1
+      proto  : tcp
+      ports  : [80,443,3000,4567,8080,8081,8082,8090,8200,8300,8443]
+      src    : [0.0.0.0/0]
+      prio   : 1000
+      action : allow
+      log    : true
+  egress:
+# net1
+    - name   : net1-deny-all
+      net    : net1
+      proto  : all
+      ports  : []
+      dst    : [0.0.0.0/0]
+      prio   : 5000
+      action : deny
+      log    : true
+    - name   : net1-default-tcp
+      net    : net1
+      proto  : tcp
+      ports  : [22,53,80,443]
+      dst    : [0.0.0.0/0]
+      prio   : 1000
+      action : allow
+      log    : true
+    - name   : net1-default-udp
+      net    : net1
+      proto  : udp
+      ports  : [53,123,1194]
+      dst    : [0.0.0.0/0]
+      prio   : 1000
+      action : allow
+      log    : true
+    - name   : net1-default-icmp
+      net    : net1
+      proto  : icmp
+      ports  : []
+      dst    : [0.0.0.0/0]
+      prio   : 1000
+      action : allow
+      log    : true
+
+vms:
+  - name     : vm-1
+    type     : e2-medium
+    image    : centos-stream-9-v20240213
+    #image   : debian-11-bullseye-v20240213
+    net      : net1-lan1
+    script   : ./ppvm.sh
+    spot     : true
+    lifespan : 8 # in hours
+    nat      : true
+    disks    :
+      - name: boot
+        type: pd-ssd
+      - name: data1
+      - name: data2
+    labels   :
+      ctlabs: service_account_given
+    service_account :
+      email : 611455190411-compute@developer.gserviceaccount.com
+      scopes: ["cloud-platform"]
+
+  - name     : vm-2
+    type     : e2-small
+    #image    : centos-stream-9-v20240213
+    image    : debian-11-bullseye-v20240213
+    net      : net1-lan1
+    spot     : true
+    lifespan : 1.5 # in hours
+    nat      : true
+    disks    :
+      - name: boot
+        type: pd-ssd
+      - name: data1
+      - name: data2
+        type: pd-ssd
+    labels   :
+      ctlabs: no_service_account
+
+  - name     : vm-3
+    type     : e2-micro
+    image    : centos-stream-9-v20240213
+    net      : net1-lan1
+    spot     : true
+    lifespan : 4 # in hours
+    nat      : true
+    disks    :
+      - name: boot
+    labels   :
+      ctlabs: no_service_account
+
+#  - name       : vm-2
+#    type       : n2-highcpu-4
+#    image      : centos-stream-9-v20240213
+#    #image      : debian-11-bullseye-v20240213
+#    net        : net1-lan1
+#    script     : ../ppvm.sh
+#    spot       : true
+#    lifespan   : 6 # in hours
+#    nested     : true
+#    nat        : true
+#    labels     :
+#      ctlabs: riscv6
