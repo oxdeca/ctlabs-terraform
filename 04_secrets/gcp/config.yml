@@ -89,8 +89,9 @@ vms:
     #image   : debian-11-bullseye-v20240213
     net      : net1-lan1
     script   : ./ppvm.sh
-    spot     : true
-    lifespan : 8 # in hours
+    spot     :
+      lifespan : 8 # in hours
+      action   : STOP
     nat      : true
     disks    :
       - name: boot
@@ -125,8 +126,6 @@ vms:
     type     : e2-micro
     image    : centos-stream-9-v20240213
     net      : net1-lan1
-    spot     : true
-    lifespan : 4 # in hours
     nat      : true
     disks    :
       - name: boot
