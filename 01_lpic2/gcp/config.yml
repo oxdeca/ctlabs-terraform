@@ -15,6 +15,9 @@
 #  zone   : <GCP_ZONE>
 #
 
+services:
+  - secretmanager.googleapis.com
+
 network:
   - name : net1
 
@@ -78,14 +81,16 @@ firewall:
 vms:
   - name       : vm-1
     type       : e2-medium
-    #image      : ctlabs-2024-04-21
+    #image      : ctlabs-2024-04-25
     image      : centos-stream-9-v20240213
     #image      : debian-11-bullseye-v20240213
     net        : net1-lan1
-    script     : ../ppvm.sh
+    #script     : ../ppvm.sh
     spot       : true
     lifespan   : 6 # in hours
     nat        : true
+    disks      :
+      - name: boot
     labels     :
       ctlabs: lpic2
 
