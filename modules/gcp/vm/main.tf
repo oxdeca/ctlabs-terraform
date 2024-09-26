@@ -4,11 +4,9 @@
 # -----------------------------------------------------------------------------
 
 locals {
-  default_disk = {
-    "type" = "pd-standard"
-    "size" = "10"
-  }
-  disks = flatten( [ for vm in var.vms : [ for disk in vm.disks : merge( { vm_id = vm.name, disk_id = disk.name }, disk ) ] ] )
+  default_disk = {"type" = "pd-standard", "size" = "10" }
+  default_spot = {"lifespan" = 2, "action" = "DELETE" }
+  disks        = flatten( [ for vm in var.vms : [ for disk in vm.disks : merge( { vm_id = vm.name, disk_id = disk.name }, disk ) ] ] )
 }
 
 resource "random_integer" "ri" {
@@ -113,15 +111,15 @@ resource "google_compute_instance" "vm" {
   }
 
   dynamic scheduling {
-    for_each = each.value.spot ? toset([1]) : toset([])
+    for_each = try( each.value.spot, null ) != null ? toset([1]) : toset([])
     content {
       preemptible                 = true
       automatic_restart           = false
       provisioning_model          = "SPOT"
-      instance_termination_action = "DELETE"
+      instance_termination_action = try( each.value.spot.action, local.default_spot.action )
 
       max_run_duration {
-        seconds = try( each.value.lifespan * 3600, 14400)
+        seconds = try( each.value.spot.lifespan * 3600, local.default_spot.lifespan * 3600, 14400 )
       }
     }
   }

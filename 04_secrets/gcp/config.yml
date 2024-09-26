@@ -108,8 +108,9 @@ vms:
     #image    : centos-stream-9-v20240213
     image    : debian-11-bullseye-v20240213
     net      : net1-lan1
-    spot     : true
-    lifespan : 1.5 # in hours
+    spot     : 
+      lifespan : 1.5 # in hours
+      action   : DELETE
     nat      : true
     disks    :
       - name: boot
