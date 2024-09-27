@@ -74,17 +74,10 @@ module "subnet" {
 # FIREWALL
 #
 
-module "fw_ingress" {
-  source     = "../fw_ingress"
+module "firewall" {
+  source     = "../firewall"
 
-  ingress    = try( var.config.firewall.ingress, [] )
-  depends_on = [module.net]
-}
-
-module "fw_egress" {
-  source     = "../fw_egress"
-
-  egress     = try( var.config.firewall.egress, [] )
+  ingress    = try( var.config.firewall, [] )
   depends_on = [module.net]
 }
 

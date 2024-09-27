@@ -23,64 +23,76 @@ services:
 
 network:
   - name : net1
+  - name : net2
 
 subnet:
-  - name : net1-lan1
-    net  : net1
-    cidr : 172.25.70.0/24
+  net1:
+    - name : net1-lan1
+      cidr : 172.25.70.0/24
+  net2:
+    - name : net2-lan1
+      cidr : 172.25.71.0/24
+
 firewall:
-  ingress:
-# net1
-    - name   : net1-ssh-iap
-      net    : net1
-      proto  : tcp
-      ports  : [22]
-      src    : [35.235.240.0/20]
-      prio   : 1000
-      action : allow
-      log    : true
-    - name   : net1-ctlabs-in
-      net    : net1
-      proto  : tcp
-      ports  : [80,443,3000,4567,8080,8081,8082,8090,8200,8300,8443]
-      src    : [0.0.0.0/0]
-      prio   : 1000
-      action : allow
-      log    : true
-  egress:
-# net1
-    - name   : net1-deny-all
-      net    : net1
-      proto  : all
-      ports  : []
-      dst    : [0.0.0.0/0]
-      prio   : 5000
-      action : deny
-      log    : true
-    - name   : net1-default-tcp
-      net    : net1
-      proto  : tcp
-      ports  : [22,53,80,443]
-      dst    : [0.0.0.0/0]
-      prio   : 1000
-      action : allow
-      log    : true
-    - name   : net1-default-udp
-      net    : net1
-      proto  : udp
-      ports  : [53,123,1194]
-      dst    : [0.0.0.0/0]
-      prio   : 1000
-      action : allow
-      log    : true
-    - name   : net1-default-icmp
-      net    : net1
-      proto  : icmp
-      ports  : []
-      dst    : [0.0.0.0/0]
-      prio   : 1000
-      action : allow
-      log    : true
+  net1:
+    ingress:
+      - name   : net1-ssh-iap
+        proto  : tcp
+        ports  : [22]
+        src    : [35.235.240.0/20]
+
+      - name   : net1-ctlabs-in
+        ports  : [80,443,3000,4567,8080,8081,8082,8090,8200,8300,8443]
+        src    : [0.0.0.0/0]
+
+    egress:
+      - name   : net1-deny-all
+        proto  : all
+        dst    : [0.0.0.0/0]
+        prio   : 5000
+        action : deny
+
+      - name   : net1-default-tcp
+        proto  : tcp
+        ports  : [22,53,80,443]
+        dst    : [0.0.0.0/0]
+
+      - name   : net1-default-udp
+        proto  : udp
+        ports  : [53,123,1194]
+        dst    : [0.0.0.0/0]
+
+      - name   : net1-default-icmp
+        proto  : icmp
+        dst    : [0.0.0.0/0]
+
+  net2:
+    ingress:
+      - name   : net2-ssh-iap
+        proto  : tcp
+        ports  : [22]
+        src    : [35.235.240.0/20]
+
+    egress:
+      - name   : net2-deny-all
+        proto  : all
+        dst    : [0.0.0.0/0]
+        prio   : 5000
+        action : deny
+
+      - name   : net2-default-tcp
+        proto  : tcp
+        ports  : [22,53,80,443]
+        dst    : [0.0.0.0/0]
+
+      - name   : net2-default-udp
+        proto  : udp
+        ports  : [53,123,1194]
+        dst    : [0.0.0.0/0]
+
+      - name   : net2-default-icmp
+        proto  : icmp
+        dst    : [0.0.0.0/0]
 
 vms:
   - name     : vm-1
@@ -109,7 +121,7 @@ vms:
     #image    : centos-stream-9-v20240213
     image    : debian-11-bullseye-v20240213
     net      : net1-lan1
-    spot     : 
+    spot     :
       lifespan : 1.5 # in hours
       action   : DELETE
     nat      : true
