@@ -77,7 +77,7 @@ module "subnet" {
 module "firewall" {
   source     = "../firewall"
 
-  ingress    = try( var.config.firewall, [] )
+  firewall   = try( var.config.firewall, [] )
   depends_on = [module.net]
 }
 
