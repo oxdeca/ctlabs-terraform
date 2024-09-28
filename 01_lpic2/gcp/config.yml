@@ -15,6 +15,21 @@
 #  zone   : <GCP_ZONE>
 #
 
+# -----------------------------------------------------------------------------
+#
+# YAML DEFAULTS
+#
+defaults:
+  labels: &default_labels
+    ctlabs : lpic2
+    owner  : ctlabs_admin
+  spot: &default_spot
+    action  : STOP
+    lifespan: 2 # in hours
+  disks: &default_disks
+    boot:
+# -----------------------------------------------------------------------------
+
 services:
   - secretmanager.googleapis.com
 
@@ -69,23 +84,17 @@ vms:
     #image      : debian-11-bullseye-v20240213
     net        : net1-lan1
     #script     : ../ppvm.sh
-    spot       : 
-      lifespan   : 6 # in hours
-    nat        : true
-    disks      :
-      - name: boot
-    labels     :
-      ctlabs: lpic2
+    spot       : *default_spot
+    disks      : *default_disks
+    labels     : *default_labels
 
 #  - name       : vm-2
 #    type       : e2-medium
 #    image      : image-1
 #    net        : net1-lan1
-#    spot       :
-#      lifespan   : 6 # in hours
 #    nat        : true
-#    labels     :
-#      ctlabs: lpic2
+#    spot       : *default_spot
+#    labels     : *default_labels
 
 
 #  - name       : vm-2
@@ -93,10 +102,8 @@ vms:
 #    image      : centos-stream-9-v20240213
 #    #image      : debian-11-bullseye-v20240213
 #    net        : net1-lan1
-#    script     : ../ppvm.sh
-#    spot       :
-#      lifespan   : 6 # in hours
-#    nested     : true
 #    nat        : true
-#    labels     :
-#      ctlabs: riscv6
+#    nested     : true
+#    script     : ../ppvm.sh
+#    spot       : *default_spot
+#    labels     : *default_labels

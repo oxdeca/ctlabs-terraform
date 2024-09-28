@@ -15,7 +15,23 @@
 #  zone   : <GCP_ZONE>
 #
 
+# -----------------------------------------------------------------------------
+#
+# YAML DEFAULTS
+#
+defaults:
+  labels: &default_labels
+    ctlabs_created : true
+    owner          : ctlabs_admin
+  spot: &default_spot
+    action  : STOP
+    lifespan: 2 # in hours
+  disks: &default_disks
+    boot:
+# -----------------------------------------------------------------------------
+
 services:
+  - compute.googleapis.com
   - cloudfunctions.googleapis.com
   - cloudbuild.googleapis.com
   - artifactregistry.googleapis.com
@@ -34,29 +50,28 @@ functions:
     source   : hello_func/hello_http.zip
     http     : true
     entry    :
-    labels   :
+    labels   : *default_labels
     env_vars :
 
 network:
   - name: net1
 
 subnet: 
-  - name : net1-lan2
-    net  : net1
-    cidr : 192.168.67.0/24
+  net1:
+    - name : net-lan2
+      cidr : 192.168.67.0/24
 
 vms: 
   - name     : vm-1
     type     : e2-micro
     image    : centos-stream-9-v20240213
     net      : net1-lan2
-    spot     :
-      lifespan : 2
+    spot     : *default_spot
     nat      : false
-    disks    :
-      - name: boot
-    labels   :
+    disks    : *default_disks
+    labels   : *default_labels
 
 firewall:
-  ingress: []
-  egress : []
+  net1:
+    ingress: []
+    egress : []

@@ -4,28 +4,36 @@
 # -----------------------------------------------------------------------------
 
 locals {
-  default_disk = {"type" = "pd-standard", "size" = "10" }
-  default_spot = {"lifespan" = 2, "action" = "DELETE" }
-  disks        = flatten( [ for vm in var.vms : [ for disk in vm.disks : merge( { vm_id = vm.name, disk_id = disk.name }, disk ) ] ] )
+  defaults = {
+    "disk" = { 
+      "type" = "pd-standard", 
+      "size" = "10" 
+    },
+    "spot" = { 
+      "lifespan" = 2, 
+      "action"   = "DELETE" 
+    },
+  }
+  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
 
 resource "random_integer" "ri" {
   min = 1000
   max = 9999
-  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.name}" => disk }
+  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk }
   keepers = {
-    name = each.value.name
+    name = each.value.disk_id
     type = try( each.value.type, null )
     size = try( each.value.size, null )
   }
 }
 
 resource "google_compute_disk" "attached" {
-  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.name}" => disk if ! startswith( disk.name, "boot" ) } 
+  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if ! startswith( disk.disk_id, "boot" ) } 
   #name     = "${each.value.vm_id}-${random_integer.ri[each.key].result}-${each.value.name}"
-  name     = "${each.value.vm_id}-${each.value.name}"
-  type     = try( each.value.type, local.default_disk["type"] )
-  size     = try( each.value.size, local.default_disk["size"] )
+  name     = "${each.value.vm_id}-${each.value.disk_id}"
+  type     = try( each.value.type, local.defaults.disk["type"] )
+  size     = try( each.value.size, local.defaults.disk["size"] )
   #zone     = var.zone
   #labels   = var.labels
 
@@ -63,18 +71,20 @@ resource "google_compute_instance" "vm" {
     device_name  = "${each.value.name}-boot"
     initialize_params {
       image = each.value.image
-      type  = try( each.value.disks[index(each.value.disks.*.name, "boot")].type, null )
-      size  = try( each.value.disks[index(each.value.disks.*.name, "boot")].size, null )
+      type  = try( each.value.disks.boot.type, null )
+      size  = try( each.value.disks.boot.size, null )
+      #type  = try( each.value.disks[index(each.value.disks.*.name, "boot")].type, null )
+      #size  = try( each.value.disks[index(each.value.disks.*.name, "boot")].size, null )
     }
   }
 
   dynamic attached_disk {
-    for_each = { for disk in each.value.disks: "${each.value.name}-${disk.name}" => disk if ! startswith( disk.name, "boot" ) }
+    for_each = { for dk,dv in each.value.disks: "${each.value.name}-${dk}" => dv if ! startswith( dk, "boot" ) }
     content {
       #device_name = "${each.value.name}-${random_integer.ri[attached_disk.key].result}-${attached_disk.value.name}"
       #source      = "${each.value.name}-${random_integer.ri[attached_disk.key].result}-${attached_disk.value.name}"
-      device_name = "${each.value.name}-${attached_disk.value.name}"
-      source      = "${each.value.name}-${attached_disk.value.name}"
+      device_name = "${attached_disk.key}"
+      source      = "${attached_disk.key}"
       mode        = try( attached_disk.value.mode, "READ_WRITE" )
     }
   } 
@@ -116,10 +126,10 @@ resource "google_compute_instance" "vm" {
       preemptible                 = true
       automatic_restart           = false
       provisioning_model          = "SPOT"
-      instance_termination_action = try( each.value.spot.action, local.default_spot.action )
+      instance_termination_action = try( each.value.spot.action, local.defaults.spot.action )
 
       max_run_duration {
-        seconds = try( each.value.spot.lifespan * 3600, local.default_spot.lifespan * 3600, 14400 )
+        seconds = try( each.value.spot.lifespan * 3600, local.defaults.spot.lifespan * 3600, 14400 )
       }
     }
   }

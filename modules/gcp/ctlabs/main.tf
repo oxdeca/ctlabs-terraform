@@ -57,7 +57,7 @@ module "net" {
   source = "../net"
 
   nets       = try( var.config.network, [] )
-  #depends_on = [module.costs]
+  depends_on = [module.services]
 }
 
 module "subnet" {

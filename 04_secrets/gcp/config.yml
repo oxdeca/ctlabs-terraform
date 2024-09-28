@@ -15,6 +15,21 @@
 #  zone   : <GCP_ZONE>
 #
 
+# -----------------------------------------------------------------------------
+#
+# YAML DEFAULTS
+#
+defaults:
+  labels: &default_labels
+    ctlabs_created : true
+    owner          : ctlabs_admin
+  spot: &default_spot
+    action  : STOP
+    lifespan: 8 # in hours
+  disks: &default_disks
+    boot:
+# -----------------------------------------------------------------------------
+
 services:
   - compute.googleapis.com
   - secretmanager.googleapis.com
@@ -37,7 +52,6 @@ firewall:
   net1:
     ingress:
       - name   : net1-ssh-iap
-        proto  : tcp
         ports  : [22]
         src    : [35.235.240.0/20]
 
@@ -53,7 +67,6 @@ firewall:
         action : deny
 
       - name   : net1-default-tcp
-        proto  : tcp
         ports  : [22,53,80,443]
         dst    : [0.0.0.0/0]
 
@@ -69,7 +82,6 @@ firewall:
   net2:
     ingress:
       - name   : net2-ssh-iap
-        proto  : tcp
         ports  : [22]
         src    : [35.235.240.0/20]
 
@@ -81,7 +93,6 @@ firewall:
         action : deny
 
       - name   : net2-default-tcp
-        proto  : tcp
         ports  : [22,53,80,443]
         dst    : [0.0.0.0/0]
 
@@ -94,6 +105,12 @@ firewall:
         proto  : icmp
         dst    : [0.0.0.0/0]
 
+buckets:
+  - name     : named-mason-414305_tf-state
+    location : us
+    destroy  : true
+    labels   : *default_labels
+
 vms:
   - name     : vm-1
     type     : e2-medium
@@ -101,47 +118,39 @@ vms:
     #image   : debian-11-bullseye-v20240213
     net      : net1-lan1
     script   : ./ppvm.sh
-    spot     :
-      lifespan : 8 # in hours
-      action   : STOP
+    spot     : *default_spot
     nat      : true
-    disks    :
-      - name: boot
-        type: pd-ssd
-      - name: data1
-      - name: data2
+    disks    : 
+      <<: *default_disks
+      vg-data-1:
     labels   :
+      <<    : *default_labels
       ctlabs: service_account_given
     service_account :
       email : 611455190411-compute@developer.gserviceaccount.com
       scopes: ["cloud-platform"]
 
   - name     : vm-2
-    type     : e2-small
+    type     : e2-micro
     #image    : centos-stream-9-v20240213
     image    : debian-11-bullseye-v20240213
     net      : net1-lan1
-    spot     :
-      lifespan : 1.5 # in hours
-      action   : DELETE
     nat      : true
-    disks    :
-      - name: boot
-        type: pd-ssd
-      - name: data1
-      - name: data2
-        type: pd-ssd
+    spot     : *default_spot
+    disks    : *default_disks
     labels   :
+      <<    : *default_labels
       ctlabs: no_service_account
 
   - name     : vm-3
     type     : e2-micro
     image    : centos-stream-9-v20240213
-    net      : net1-lan1
+    net      : net2-lan1
     nat      : true
-    disks    :
-      - name: boot
+    spot     : *default_spot
+    disks    : *default_disks
     labels   :
+      <<    : *default_labels
       ctlabs: no_service_account
 
 #  - name       : vm-2
