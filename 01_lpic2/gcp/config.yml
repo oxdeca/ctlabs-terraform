@@ -83,7 +83,8 @@ vms:
     image      : centos-stream-9-v20240213
     #image      : debian-11-bullseye-v20240213
     net        : net1-lan1
-    #script     : ../ppvm.sh
+    nat        : true
+    script     : ../ppvm.sh
     spot       : *default_spot
     disks      : *default_disks
     labels     : *default_labels
