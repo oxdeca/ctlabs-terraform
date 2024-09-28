@@ -31,6 +31,7 @@ defaults:
 # -----------------------------------------------------------------------------
 
 services:
+  - compute.googleapis.com
   - secretmanager.googleapis.com
 
 network:
@@ -73,7 +74,6 @@ firewall:
 
       - name   : net1-default-icmp
         proto  : icmp
-        ports  : []
         dst    : [0.0.0.0/0]
         
 vms:

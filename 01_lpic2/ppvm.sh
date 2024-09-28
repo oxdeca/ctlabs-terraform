@@ -34,6 +34,7 @@ BASE64=/usr/bin/base64
 #
 LAB="lpic2.c9"
 PKGS=(
+  'lvm2'
   'tmux'
   'vim'
   'git'
@@ -201,9 +202,9 @@ os_update() {
 }
 
 packages() {
-  ${ECHO} 'if [ -f "/etc/bashrc.kali" ]; then . /etc/bashrc.kali; fi' >> /etc/bashrc
-  ${ECHO} -en $BASHRC_KALI | ${SED} 's@ @\n@g' | ${BASE64} -d > /etc/bashrc.kali
+  ${ECHO} -en $BASHRC_KALI | ${SED} 's@ @\n@g' | ${BASE64} -d > /etc/profile.d/bashrc_kali.sh
   ${ECHO} "set paste" >> /etc/vimrc
+  ${TOUCH} /etc/containers/nodocker
 
   for p in "${PKGS[@]}"; do
     ${DNF} -y install "${p}"
@@ -306,7 +307,6 @@ clone_repo() {
 }
 
 ctimages() {
-  ${TOUCH} /etc/containers/nodocker
   for d in "${CTIMGS[@]}"; do
     cd ${d}
     ${BASH} ./build.sh

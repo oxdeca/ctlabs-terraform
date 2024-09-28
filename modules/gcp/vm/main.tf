@@ -13,6 +13,8 @@ locals {
       "lifespan" = 2, 
       "action"   = "DELETE" 
     },
+    "nat"    = false,
+    "nested" = false,
   }
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
@@ -97,14 +99,14 @@ resource "google_compute_instance" "vm" {
     subnetwork = each.value.net
 
     dynamic access_config {
-      for_each = each.value.nat ? toset([1]) : toset([])
+      for_each = try( each.value.nat, local.defaults.nat ) ? toset([1]) : toset([])
       content {
       }
     }
   }
 
   advanced_machine_features {
-    enable_nested_virtualization = try( each.value.nested, false )
+    enable_nested_virtualization = try( each.value.nested, local.defaults.nested )
   }
 
   metadata = {
