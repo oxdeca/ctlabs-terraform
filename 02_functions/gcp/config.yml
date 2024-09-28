@@ -58,7 +58,7 @@ network:
 
 subnet: 
   net1:
-    - name : net-lan2
+    - name : net1-lan2
       cidr : 192.168.67.0/24
 
 vms: 
@@ -67,7 +67,6 @@ vms:
     image    : centos-stream-9-v20240213
     net      : net1-lan2
     spot     : *default_spot
-    nat      : false
     disks    : *default_disks
     labels   : *default_labels
 
