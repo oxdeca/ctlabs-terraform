@@ -19,20 +19,8 @@ locals {
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
 
-resource "random_integer" "ri" {
-  min = 1000
-  max = 9999
-  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk }
-  keepers = {
-    name = each.value.disk_id
-    type = try( each.value.type, null )
-    size = try( each.value.size, null )
-  }
-}
-
 resource "google_compute_disk" "attached" {
   for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if ! startswith( disk.disk_id, "boot" ) } 
-  #name     = "${each.value.vm_id}-${random_integer.ri[each.key].result}-${each.value.name}"
   name     = "${each.value.vm_id}-${each.value.disk_id}"
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
@@ -69,7 +57,6 @@ resource "google_compute_instance" "vm" {
   labels                    = each.value.labels
 
   boot_disk {
-    #device_name  = "${each.value.name}-${random_integer.ri["${each.value.name}-boot"].result}-boot"
     device_name  = "${each.value.name}-boot"
     initialize_params {
       image = each.value.image
@@ -83,8 +70,6 @@ resource "google_compute_instance" "vm" {
   dynamic attached_disk {
     for_each = { for dk,dv in each.value.disks: "${each.value.name}-${dk}" => dv if ! startswith( dk, "boot" ) }
     content {
-      #device_name = "${each.value.name}-${random_integer.ri[attached_disk.key].result}-${attached_disk.value.name}"
-      #source      = "${each.value.name}-${random_integer.ri[attached_disk.key].result}-${attached_disk.value.name}"
       device_name = "${attached_disk.key}"
       source      = "${attached_disk.key}"
       mode        = try( attached_disk.value.mode, "READ_WRITE" )
@@ -92,7 +77,7 @@ resource "google_compute_instance" "vm" {
   } 
 
   lifecycle {
-    ignore_changes = [metadata_startup_script]
+    ignore_changes = [metadata_startup_script, attached_disk]
   }
 
   network_interface {
