@@ -29,16 +29,16 @@ resource "google_compute_disk" "attached" {
 
 
   # as removing/changing a disk configurations isn't expected to happen often and
-  # because a disk configuration change recreates a disk 
-  # attached disks are protected by having lifecycle.prevent_destroy set to true (see google_comput_disk resource above)
+  # because a disk configuration change(rename, reduce size) recreates a disk 
+  # attached disks are protected by having 'lifecycle.prevent_destroy' set to true (see google_comput_disk resource above)
   # i.e. adding disks can be done with this module, but changes/deletes need to be done manually (or by setting below lifecycle.prevent_destroy = false)
   # 
   # Thus changing/removing disks is a manual task that would work as follows:
   # 1. add a new disk
   # 2. copy the data from the old disk to the new one (if needed)
-  # 3. detach the old disk from the vm manually
-  # 4. delete the old disk manually
-  # 5. remove the old disk from the configuration
+  # 3. make sure the disks isn't used by the OS anymore or deconfigure it on the OS-level
+  # 4. umount disk in the OS
+  # 5. remove the old disk from the terraform configuration
   # 6. run terraform to update its state
   lifecycle {
     prevent_destroy = true
