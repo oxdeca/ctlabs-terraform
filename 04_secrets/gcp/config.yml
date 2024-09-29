@@ -144,7 +144,8 @@ vms:
 
   - name     : vm-3
     type     : e2-micro
-    image    : centos-stream-9-v20240213
+    #image    : centos-stream-9-v20240213
+    image    : debian-12-bookworm-v20240910
     net      : net2-lan1
     nat      : true
     spot     : *default_spot

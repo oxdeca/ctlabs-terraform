@@ -13,6 +13,6 @@ resource "google_compute_subnetwork" "sub" {
   network       = each.value.net_id
   name          = each.value.name
   ip_cidr_range = each.value.cidr
-  region        = var.project.region
+  region        = try( each.value.region, var.project.region )
 }
 
