@@ -38,6 +38,17 @@ module "services" {
 # -------------------------------------------------------------------------------------------
 
 #
+# Service Accounts
+#
+module "service_account" {
+  source = "../service_account"
+
+  service_accounts = try( var.config.service_accounts, [] )
+}
+
+# -------------------------------------------------------------------------------------------
+
+#
 # Costs
 #
 
