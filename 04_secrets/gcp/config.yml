@@ -126,9 +126,6 @@ vms:
     labels   :
       <<    : *default_labels
       ctlabs: service_account_given
-    service_account :
-      email : 611455190411-compute@developer.gserviceaccount.com
-      scopes: ["cloud-platform"]
 
   - name     : vm-2
     type     : e2-micro
@@ -141,6 +138,7 @@ vms:
     labels   :
       <<    : *default_labels
       ctlabs: no_service_account
+
 
   - name     : vm-3
     type     : e2-micro

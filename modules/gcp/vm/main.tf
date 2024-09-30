@@ -15,9 +15,20 @@ locals {
     },
     "nat"    = false,
     "nested" = false,
+    "sa_prefix" = "gce-",
+    "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
+
+resource "google_service_account" "sa" {
+  for_each = { for vm in var.vms : vm.name => vm }
+
+  account_id   = "${local.defaults.sa_prefix}${each.value.name}"
+  display_name = try( each.value.name, null )
+  description  = try( each.value.desc, null )
+}
+
 
 resource "google_compute_disk" "attached" {
   for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if ! startswith( disk.disk_id, "boot" ) } 
@@ -99,10 +110,17 @@ resource "google_compute_instance" "vm" {
     startup-script = try( file("${each.value.script}"), "" )
   }
 
+#  dynamic service_account {
+#    for_each = try(each.value.service_account, null) != null ? toset([1]) : toset([])
+#    content {
+#      email  = try( each.value.service_account.email, null )
+#      scopes = concat( ["cloud-platform"], try( each.value.service_account.scopes, [] ))
+#    }
+# }
   dynamic service_account {
-    for_each = try(each.value.service_account, null) != null ? toset([1]) : toset([])
+    for_each = try(each.value.name, null) != null ? toset([1]) : toset([])
     content {
-      email  = try( each.value.service_account.email, null )
+      email  = try( each.value.service_account.email, "${local.defaults.sa_prefix}${each.value.name}${local.defaults.sa_postfix}" )
       scopes = concat( ["cloud-platform"], try( each.value.service_account.scopes, [] ))
     }
   }
