@@ -50,6 +50,10 @@ iam_roles:
       - compute.instances.get
       - compute.instanceGroups.list
 
+iam_bindings:
+  - role: roles/vaultservicerole
+    members: vault-service-account
+
 network:
   - name : net1
   - name : net2
