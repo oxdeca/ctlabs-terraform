@@ -3,7 +3,7 @@
 # Description : iam bindings
 # -----------------------------------------------------------------------------
 
-resource "gootle_project_iam_custom_role" "custom_role" {
+resource "google_project_iam_custom_role" "role" {
   for_each = { for role in var.roles : role.id => role }
 
   role_id     = each.value.id
@@ -13,10 +13,11 @@ resource "gootle_project_iam_custom_role" "custom_role" {
 }
 
 resource "google_project_iam_binding" "binding" {
-  for_each = { for binding in var.bindings : binding.name => binding }
+  for_each = { for binding in var.bindings : binding.role => binding }
 
-  project  = var.project.id
-  role     = each.value.role
-  members  = each.value.members
+  project    = var.project.id
+  role       = each.value.role
+  members    = each.value.members
+  depends_on = [google_project_iam_custom_role.role]
 }
 

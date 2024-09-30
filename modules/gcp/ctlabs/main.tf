@@ -44,7 +44,7 @@ module "iam" {
   source = "../iam"
 
   project  = try( var.project, [] )
-  roles    = tye( var.config.iam_roles, [] )
+  roles    = try( var.config.iam_roles, [] )
   bindings = try( var.config.iam_bindings, [] )
 }
 

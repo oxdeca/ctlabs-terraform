@@ -51,8 +51,9 @@ iam_roles:
       - compute.instanceGroups.list
 
 iam_bindings:
-  - role: roles/vaultservicerole
-    members: vault-service-account
+  - role: projects/<projectid>/roles/VaultServiceRole2
+    members:
+      - "serviceAccount:vault-service-account2@<projectid>.iam.gserviceaccount.com"
 
 network:
   - name : net1
