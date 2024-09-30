@@ -4,7 +4,7 @@
 # -----------------------------------------------------------------------------
 
 resource "gootle_project_iam_custom_role" "custom_role" {
-  for_each = { for role in var iam_roles : role.id => role }
+  for_each = { for role in var.roles : role.id => role }
 
   role_id     = each.value.id
   title       = try( each.value.title, null )
