@@ -38,6 +38,19 @@ module "services" {
 # -------------------------------------------------------------------------------------------
 
 #
+# IAM
+#
+module "iam" {
+  source = "../iam"
+
+  project  = try( var.project, [] )
+  roles    = tye( var.config.iam_roles, [] )
+  bindings = try( var.config.iam_bindings, [] )
+}
+
+# -------------------------------------------------------------------------------------------
+
+#
 # Service Accounts
 #
 module "service_account" {

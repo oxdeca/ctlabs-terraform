@@ -32,9 +32,23 @@ defaults:
 
 services:
   - compute.googleapis.com
-  - secretmanager.googleapis.com
   - iam.googleapis.com
   - cloudresourcemanager.googleapis.com
+  - secretmanager.googleapis.com
+
+service_accounts:
+  - id  : vault-service-account
+    name: VaulServiceAccount
+
+iam_roles:
+  - id    : VaultServiceRole
+    title : VaultServiceRole
+    perms : 
+      - iam.serviceAccounts.get
+      - iam.serviceAccountKeys.get
+      - iam.serviceAccounts.signJwt
+      - compute.instances.get
+      - compute.instanceGroups.list
 
 network:
   - name : net1
