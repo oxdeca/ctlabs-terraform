@@ -67,7 +67,7 @@ firewall:
         action : deny
 
       - name   : net1-default-tcp
-        ports  : [22,53,80,443]
+        ports  : [22,53,80,443,8200]
         dst    : [0.0.0.0/0]
 
       - name   : net1-default-udp
