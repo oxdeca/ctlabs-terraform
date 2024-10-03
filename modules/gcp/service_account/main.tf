@@ -10,3 +10,10 @@ resource "google_service_account" "sa" {
   display_name = try( each.value.name, null )
   description  = try( each.value.desc, null )
 }
+
+resource "google_service_account_key" "sa_key" {
+  for_each = { for sa in var.service_accounts : sa.name => sa }
+
+  service_account_id = google_service_account.sa[each.value.name].name
+  public_key_type = "TYPE_X509_PEM_FILE"
+}
