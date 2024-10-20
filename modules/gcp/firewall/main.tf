@@ -17,6 +17,7 @@ resource "google_compute_firewall" "ingress" {
   network       = each.value.net_id
   source_ranges = each.value.src
   priority      = try( each.value.prio, local.defaults.prio )
+  description   = try( each.value.desc, null )
 
   dynamic allow {
     for_each = try( each.value.action, local.defaults.action ) == "allow" ? toset(["allow"]) : toset([])
@@ -49,7 +50,8 @@ resource "google_compute_firewall" "egress" {
   network            = each.value.net_id
   name               = each.value.name
   destination_ranges = each.value.dst
-  priority            = try( each.value.prio, local.defaults.prio )
+  priority           = try( each.value.prio, local.defaults.prio )
+  description        = try( each.value.desc, null )
 
   dynamic allow {
     for_each = try( each.value.action, local.defaults.action )  == "allow" ? toset(["allow"]) : toset([])

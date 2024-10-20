@@ -3,7 +3,7 @@
 # Description : terraform configuration to provision lab lpic2 in GCP
 # -----------------------------------------------------------------------------
 
-locals { gcpconf = yamldecode( file("../../gcp.conf.yml") ) }
+locals { gcpconf = yamldecode( file("./gcp.conf.yml") ) }
 locals { config  = yamldecode( file("./config.yml") ) }
 
 

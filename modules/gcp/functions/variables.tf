@@ -3,4 +3,5 @@
 # Description : functions module variables
 # -----------------------------------------------------------------------------
 
+variable project   { type = any }
 variable functions { type = any }

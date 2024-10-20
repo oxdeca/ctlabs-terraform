@@ -303,8 +303,9 @@ clone_repo() {
   cd /root/
   ${GIT} clone https://github.com/oxdeca/ctlabs.git
   ${GIT} clone https://github.com/oxdeca/ctlabs-ansible.git
-  ${MKDIR} -vp /tmp/public
-  ${CP} ctlabs/images/centos/c9/base/bashrc.kali /etc/
+  
+  ${CP} ctlabs/ctlabs/ctlabs-server.service /etc/systemd/system/
+  ${SYSTEMCTL} enable --now ctlabs-server.service
 }
 
 ctimages() {

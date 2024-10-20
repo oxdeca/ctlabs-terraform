@@ -21,6 +21,11 @@ provider "google-beta" {
   zone    = try( var.project.zone )
 }
 
+module "project" {
+  source  = "../project"
+
+  project = try( merge( var.project, { "labels" = var.config.defaults.labels } ) )
+}
 
 # -------------------------------------------------------------------------------------------
 
@@ -32,8 +37,22 @@ module "services" {
 
   services = try( var.config.services, [] )
   project  = try( var.project, [] )
+
+  depends_on = [module.project]
 }
 
+# -------------------------------------------------------------------------------------------
+
+#
+# Service Accounts
+#
+module "service_account" {
+  source = "../service_account"
+
+  service_accounts = try( var.config.service_accounts, [] )
+
+  depends_on = [module.services]
+}
 
 # -------------------------------------------------------------------------------------------
 
@@ -46,17 +65,8 @@ module "iam" {
   project  = try( var.project, [] )
   roles    = try( var.config.iam_roles, [] )
   bindings = try( var.config.iam_bindings, [] )
-}
 
-# -------------------------------------------------------------------------------------------
-
-#
-# Service Accounts
-#
-module "service_account" {
-  source = "../service_account"
-
-  service_accounts = try( var.config.service_accounts, [] )
+  depends_on = [module.services, module.service_accounts]
 }
 
 # -------------------------------------------------------------------------------------------
@@ -81,15 +91,17 @@ module "service_account" {
 module "net" {
   source = "../net"
 
-  nets       = try( var.config.network, [] )
-  depends_on = [module.services]
+  nets = try( var.config.network, [] )
+
+  depends_on = [module.project, module.services]
 }
 
 module "subnet" {
-  source     = "../subnet"
+  source = "../subnet"
 
-  project    = try( var.project, [] )
-  subnets    = try( var.config.subnet, [] )
+  project = try( var.project, [] )
+  subnets = try( var.config.subnet, [] )
+
   depends_on = [module.net]
 }
 
@@ -100,9 +112,10 @@ module "subnet" {
 #
 
 module "firewall" {
-  source     = "../firewall"
+  source = "../firewall"
 
-  firewall   = try( var.config.firewall, [] )
+  firewall = try( var.config.firewall, [] )
+
   depends_on = [module.net]
 }
 
@@ -113,10 +126,11 @@ module "firewall" {
 #
 
 module "vm" {
-  source     = "../vm"
+  source = "../vm"
 
-  project    = try( var.project, [] )
-  vms        = try( var.config.vms, [] )
+  project = try( var.project, [] )
+  vms     = try( var.config.vms, [] )
+
   depends_on = [module.net, module.subnet]
 }
 
@@ -129,7 +143,10 @@ module "vm" {
 module "buckets" {
   source = "../buckets"
 
+  project = try( var.project, [] )
   buckets = try( var.config.buckets, [] )
+
+  depends_on = [module.services]
 }
 
 # -------------------------------------------------------------------------------------------
@@ -141,7 +158,8 @@ module "buckets" {
 module "functions" {
   source = "../functions"
 
-  functions  = try( var.config.functions, [] )
+  functions = try( var.config.functions, [] )
+
   depends_on = [module.buckets, module.services]
 }
 
@@ -154,8 +172,8 @@ module "functions" {
 module "bigquery" {
   source = "../bigquery"
 
-  project    = try( var.project, [] )
-  bigquery   = try( var.config.bigquery, [] )
+  project  = try( var.project, [] )
+  bigquery = try( var.config.bigquery, [] )
 
   depends_on = [module.services]
 }

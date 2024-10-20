@@ -1,8 +1,8 @@
 ---
 
 # -----------------------------------------------------------------------------
-# File        : ctlabs-terraform/secrets/config.yml
-# Description : main configuration to provision secrets
+# File        : ctlabs-terraform/05b-service-prj/config.yml
+# Description : main configuration to provision a service project
 # -----------------------------------------------------------------------------
 
 # The project gets imported from the file ctlabs-terraform/gcp.conf.yml 
@@ -36,13 +36,19 @@ defaults:
     lifespan: 8 # in hours
   disks: &default_disks
     boot:
+  network:
+    net1-lan1: &net1_lan1 regions/us-east1/subnetworks/net1-lan1
+    net2-lan1: &net2_lan1 regions/us-east1/subnetworks/net2-lan1
 # -----------------------------------------------------------------------------
 
 services:
-  - compute.googleapis.com
+  - bigquery.googleapis.com
+  - bigquerystorage.googleapis.com
+  - cloudbilling.googleapis.com
   - iam.googleapis.com
   - cloudresourcemanager.googleapis.com
   - secretmanager.googleapis.com
+  - storage-component.googleapis.com
 
 service_accounts:
   - id  : vault-service-account
@@ -60,87 +66,9 @@ iam_roles:
 
 iam_bindings:
   - role: VaultServiceRole
+    type: project
     members:
       - "serviceAccount:vault-service-account"
-
-network:
-  - name : net1
-  - name : net2
-
-subnet:
-  net1:
-    - name : net1-lan1
-      cidr : 172.25.70.0/24
-  net2:
-    - name : net2-lan1
-      cidr : 172.25.71.0/24
-
-firewall:
-  net1:
-    ingress:
-      - name   : net1-ssh-iap
-        ports  : [22]
-        src    : [35.235.240.0/20]
-
-      - name   : net1-ctlabs-in
-        ports  : [22]
-        src    : [172.25.70.0/24]
-        desc   : net2 -> net1
-
-      - name   : net1-icmp-in
-        proto  : icmp
-        src    : [172.25.70.0/24,172.25.71.0/24]
-
-    egress:
-      - name   : net1-deny-all
-        proto  : all
-        dst    : [0.0.0.0/0]
-        prio   : 5000
-        action : deny
-
-      - name   : net1-default-tcp
-        ports  : [22,53,80,443,8200]
-        dst    : [0.0.0.0/0]
-
-      - name   : net1-default-udp
-        proto  : udp
-        ports  : [53,123,1194]
-        dst    : [0.0.0.0/0]
-
-      - name   : net1-default-icmp
-        proto  : icmp
-        dst    : [0.0.0.0/0]
-
-  net2:
-    ingress:
-      - name   : net2-ssh-iap
-        ports  : [22]
-        src    : [35.235.240.0/20]
-
-      - name   : net2-icmp-in
-        proto  : icmp
-        src    : [172.25.70.0/24]
-
-    egress:
-      - name   : net2-deny-all
-        proto  : all
-        dst    : [0.0.0.0/0]
-        prio   : 5000
-        action : deny
-
-      - name   : net2-default-tcp
-        ports  : [22,53,80,443]
-        dst    : [0.0.0.0/0]
-
-      - name   : net2-default-udp
-        proto  : udp
-        ports  : [53,123,1194]
-        dst    : [0.0.0.0/0]
-
-      - name   : net2-default-icmp
-        proto  : icmp
-        dst    : [0.0.0.0/0]
-
 
 buckets:
   - name     : tf-state
@@ -150,11 +78,11 @@ buckets:
 
 vms:
   - name     : vm-1
-    type     : e2-medium
+    type     : e2-micro
     image    : centos-stream-9-v20240213
     #image   : debian-11-bullseye-v20240213
-    net      : net1-lan1
-    script   : ./ppvm.sh
+    net      : *net1_lan1
+    #script   : ./ppvm.sh
     spot     : *default_spot
     nat      : true
     disks    : 
@@ -168,20 +96,20 @@ vms:
     type     : e2-micro
     #image    : centos-stream-9-v20240213
     image    : debian-11-bullseye-v20240213
-    net      : net1-lan1
+    net      : *net1_lan1
     nat      : true
+    oslogin  : false
     spot     : *default_spot
     disks    : *default_disks
     labels   :
       <<    : *default_labels
       ctlabs: no_service_account
-
 
   - name     : vm-3
     type     : e2-micro
     #image    : centos-stream-9-v20240213
     image    : debian-12-bookworm-v20240910
-    net      : net2-lan1
+    net      : *net2_lan1
     nat      : true
     spot     : *default_spot
     disks    : *default_disks
@@ -189,15 +117,41 @@ vms:
       <<    : *default_labels
       ctlabs: no_service_account
 
-#  - name       : vm-2
-#    type       : n2-highcpu-4
-#    image      : centos-stream-9-v20240213
-#    #image      : debian-11-bullseye-v20240213
-#    net        : net1-lan1
-#    script     : ../ppvm.sh
-#    spot       :
-#      lifespan   : 6 # in hours
-#    nested     : true
-#    nat        : true
-#    labels     :
-#      ctlabs: riscv6
+bigquery:
+  # ---------------------------------------------------------------------------
+  # DATASET basic_bq
+  # ---------------------------------------------------------------------------
+  basic_bq:
+    friendly: foo
+    destroy: true
+    location: us-east1
+    access:
+      - role: roles/bigquery.user
+        members:
+          - "group:devs@acedxo.com"
+      - role: roles/bigquery.dataViewer
+        members:
+          - "group:finance-and-accounting@acedxo.com"
+          - "group:devs@acedxo.com"
+    labels: 
+      <<   : *default_labels
+      owner: dba
+    tables:
+      - name: bar
+        access:
+          - role: roles/bigquery.dataViewer
+            members:
+              - "group:new-group@acedxo.com"
+
+        labels:
+          env      : devops
+          billable : true
+          owner    : janesmith
+        schema:
+          - { name: fullVisitorId,  type: STRING, mode: REQUIRED }
+          - { name: visitNumber,    type: INTEGER }
+          - { name: visitId,        type: INTEGER }
+          - { name: visitStartTime, type: INTEGER }
+          - { name: fullDate,       type: DATE    }
+        constraints:
+          primary_key: [ fullVisitorId ]

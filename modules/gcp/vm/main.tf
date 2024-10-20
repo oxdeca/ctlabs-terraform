@@ -8,14 +8,16 @@ locals {
     "disk" = { 
       "type" = "pd-standard", 
       "size" = "10" 
+      "mode" = "READ_WRITE",
     },
     "spot" = { 
       "lifespan" = 2, 
       "action"   = "DELETE" 
     },
-    "nat"    = false,
-    "nested" = false,
-    "sa_prefix" = "gce-",
+    "oslogin"    = false,
+    "nat"        = false,
+    "nested"     = false,
+    "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
@@ -83,16 +85,16 @@ resource "google_compute_instance" "vm" {
     content {
       device_name = "${attached_disk.key}"
       source      = "${attached_disk.key}"
-      mode        = try( attached_disk.value.mode, "READ_WRITE" )
+      mode        = try( attached_disk.value.mode, local.defaults.disk.mode )
     }
   } 
 
   lifecycle {
-    ignore_changes = [metadata_startup_script, attached_disk]
+    ignore_changes = [metadata_startup_script]
   }
 
   network_interface {
-    subnetwork = each.value.net
+    subnetwork = try(var.project.vpc_type, "") == "service" ? "projects/${var.project.shared_vpc}/${each.value.net}" : each.value.net
 
     dynamic access_config {
       for_each = try( each.value.nat, local.defaults.nat ) ? toset([1]) : toset([])
@@ -106,7 +108,7 @@ resource "google_compute_instance" "vm" {
   }
 
   metadata = {
-    enable-oslogin = true
+    enable-oslogin = try( each.value.oslogin, local.defaults.oslogin )
     startup-script = try( file("${each.value.script}"), "" )
   }
 

@@ -1,7 +1,6 @@
 # -----------------------------------------------------------------------------
-# File        : ctlabs-terraform/modules/gcp/storage/variables.tf
-# Description : storage module variables
+# File        : ctlabs-terraform/modules/gcp/project/variables.tf
+# Description : project module variables
 # -----------------------------------------------------------------------------
 
 variable project { type = any }
-variable buckets { type = any }

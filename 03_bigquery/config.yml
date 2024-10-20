@@ -5,6 +5,33 @@
 # Description : main configuration to provision bigquery 
 # -----------------------------------------------------------------------------
 
+# The project gets imported from the file ctlabs-terraform/gcp.conf.yml 
+# which has the following format:
+# 
+#project:
+#  name         : 02-CtLabs Cloud Functions LAB
+#  id           : <GCP_PROJECT_ID>
+#  oid          : <GCP_ORGANIZATION_ID>
+#  user         : <GCP_USER>
+#  billing      : <GCP_BILLING_ACCOUNT_ID>
+#  vpc_type     : regular # shared, service
+#  shared_vpc   : <GCP_PROJECT_ID> of host project (only used when vpc_type == service)
+#  sa_delete    : true
+#  region       : <gcp_region>
+#  zone         : <gcp_zone>
+#  labels       :
+#    ctlabs : secrets_lab
+#
+
+
+# -----------------------------------------------------------------------------
+#
+# YAML DEFAULTS
+#
+
+# -----------------------------------------------------------------------------
+
+
 defaults:
   bigquery:
     datasets:

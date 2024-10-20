@@ -1,8 +1,8 @@
 ---
 
 # -----------------------------------------------------------------------------
-# File        : ctlabs-terraform/lpic2/config.yml
-# Description : main configuration to provision lpic2 
+# File        : ctlabs-terraform/05a_shared-vpc/config.yml
+# Description : main configuration to provision shared vpc host project
 # -----------------------------------------------------------------------------
 
 # The project gets imported from the file ctlabs-terraform/gcp.conf.yml 
@@ -19,18 +19,8 @@
 #  sa_delete    : true
 #  region       : <gcp_region>
 #  zone         : <gcp_zone>
-#  label        :
+#  labels       :
 #    ctlabs : secrets_lab
-#
-
-# The project gets imported from the file ctlabs-terraform/gcp.conf.yml 
-# which has the following format:
-# 
-#project:
-#  id     : <GCP_PROJECT_ID>
-#  user   : <GCP_USER>
-#  region : <GCP_REGION>
-#  zone   : <GCP_ZONE>
 #
 
 # -----------------------------------------------------------------------------
@@ -39,39 +29,44 @@
 #
 defaults:
   labels: &default_labels
-    ctlabs : lpic2
-    owner  : ctlabs_admin
+    ctlabs_created : true
+    owner          : ctlabs_admin
   spot: &default_spot
     action  : STOP
-    lifespan: 2 # in hours
-  image: &default_image centos-stream-9-v20240213 
+    lifespan: 8 # in hours
   disks: &default_disks
     boot:
+    acedxo:
+    dump:
 # -----------------------------------------------------------------------------
 
 services:
   - compute.googleapis.com
+  - iam.googleapis.com
+  - cloudresourcemanager.googleapis.com
   - secretmanager.googleapis.com
 
 network:
   - name : net1
+  - name : net2
 
 subnet:
   net1:
     - name : net1-lan1
       cidr : 172.25.70.0/24
+  net2:
+    - name : net2-lan1
+      cidr : 172.25.71.0/24
 
 firewall:
   net1:
     ingress:
       - name   : net1-ssh-iap
-        proto  : tcp
         ports  : [22]
         src    : [35.235.240.0/20]
 
       - name   : net1-ctlabs-in
-        proto  : tcp
-        ports  : [80,443,3000,4567,8080,8081,8082,8090,8443]
+        ports  : [80,443,3000,4567,8080,8081,8082,8090,8200,8300,8443]
         src    : [0.0.0.0/0]
 
     egress:
@@ -82,8 +77,7 @@ firewall:
         action : deny
 
       - name   : net1-default-tcp
-        proto  : tcp
-        ports  : [22,53,80,443]
+        ports  : [22,53,80,443,8200]
         dst    : [0.0.0.0/0]
 
       - name   : net1-default-udp
@@ -94,40 +88,35 @@ firewall:
       - name   : net1-default-icmp
         proto  : icmp
         dst    : [0.0.0.0/0]
-        
-vms:
-  - name       : vm-1
-    type       : e2-medium
-    #image      : ctlabs-2024-04-25
-    image      : *default_image
-    #image      : debian-11-bullseye-v20240213
-    net        : net1-lan1
-    nat        : true
-    script     : ../ppvm.sh
-    spot       : *default_spot
-    disks      : *default_disks
-    labels     : *default_labels
 
-#  - name       : vm-2
-#    type       : e2-medium
-#    image      : image-1
-#    net        : net1-lan1
-#    nat        : true
-#    spot       : *default_spot
-#    labels     : *default_labels
+  net2:
+    ingress:
+      - name   : net2-ssh-iap
+        ports  : [22]
+        src    : [35.235.240.0/20]
 
+    egress:
+      - name   : net2-deny-all
+        proto  : all
+        dst    : [0.0.0.0/0]
+        prio   : 5000
+        action : deny
 
-#
-# To run qemu in a container we need nested virtualization support
-# which is available with e.g. `nX-` machine types.
-#
-#  - name       : vm-2
-#    type       : n2-highcpu-4
-#    image      : *default_image
-#    #image      : debian-11-bullseye-v20240213
-#    net        : net1-lan1
-#    nat        : true
-#    nested     : true
-#    script     : ../ppvm.sh
-#    spot       : *default_spot
-#    labels     : *default_labels
+      - name   : net2-default-tcp
+        ports  : [22,53,80,443]
+        dst    : [0.0.0.0/0]
+
+      - name   : net2-default-udp
+        proto  : udp
+        ports  : [53,123,1194]
+        dst    : [0.0.0.0/0]
+
+      - name   : net2-default-icmp
+        proto  : icmp
+        dst    : [0.0.0.0/0]
+
+#buckets:
+#  - name     : tf-state
+#    location : us-east1
+#    destroy  : true
+#    labels   : *default_labels

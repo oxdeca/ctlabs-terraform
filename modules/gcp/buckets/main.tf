@@ -1,4 +1,4 @@
-# -----------------------------------------------------------------------------
+ -----------------------------------------------------------------------------
 # File        : ctlabs-terraform/modules/gcp/storage/main.tf
 # Description : storage module
 # -----------------------------------------------------------------------------
@@ -18,8 +18,9 @@ locals {
 resource "google_storage_bucket" "bucket" {
   for_each = { for bucket in var.buckets : bucket.name => bucket }
 
-  name                     = each.value.name
+  name                     = "${var.project.id}--${each.value.name}"
   location                 = each.value.location
+  project                  = var.project.id
   labels                   = merge( try(each.value.labels, {} ), local.defaults.labels )
   force_destroy            = try( each.value.destroy,   local.defaults.destroy   )
   storage_class            = try( each.value.class,     local.defaults.class     )
