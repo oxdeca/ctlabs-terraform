@@ -66,7 +66,7 @@ module "iam" {
   roles    = try( var.config.iam_roles, [] )
   bindings = try( var.config.iam_bindings, [] )
 
-  depends_on = [module.services, module.service_accounts]
+  depends_on = [module.services, module.service_account]
 }
 
 # -------------------------------------------------------------------------------------------
