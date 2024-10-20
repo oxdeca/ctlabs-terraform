@@ -12,9 +12,9 @@ locals {
 resource "google_project_service" "services" {
   for_each = toset(var.services)
 
-  project  = var.project.id
-  service  = each.key
-  disable_dependent_service = try( local.defaults.disable_dependent )
+  project                    = var.project.id
+  service                    = each.key
+  disable_dependent_services = try( local.defaults.disable_dependent )
 
   timeouts {
     create = "30m"
