@@ -44,6 +44,7 @@ services:
   - iam.googleapis.com
   - cloudresourcemanager.googleapis.com
   - secretmanager.googleapis.com
+  - dns.googleapis.com
 
 dns:
   ctlabs-internal:
