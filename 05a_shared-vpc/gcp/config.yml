@@ -47,9 +47,12 @@ services:
 
 dns:
   ctlabs-internal:
-    domain : ctlabs.internal
-    desc   : ctlabs internal dns zone
-    labels : *default_labels
+    domain  : ctlabs.internal
+    desc    : ctlabs internal dns zone
+    labels  : *default_labels
+    networks:
+      - net1
+      - net2
     records:
       - name : ns1.ctlabs.internal
         type : NS
