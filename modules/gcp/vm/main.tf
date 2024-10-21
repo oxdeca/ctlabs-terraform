@@ -149,7 +149,7 @@ resource "google_dns_record_set" "rr" {
 
   managed_zone = replace( each.value.domain, ".", "-" )
   name         = "${each.value.name}.${each.value.domain}."
-  project      = var.project.shared_vpc
+  project      = var.project.vpc_type == "service" ? var.project.shared_vpc : var.project.id
   type         = "A"
   rrdatas      = [google_compute_instance.vm[each.key].network_interface.0.network_ip]
 }
