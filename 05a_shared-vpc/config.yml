@@ -46,6 +46,16 @@ services:
   - cloudresourcemanager.googleapis.com
   - secretmanager.googleapis.com
 
+dns:
+  ctlabs-internal:
+    domain : ctlabs.internal
+    desc   : ctlabs internal dns zone
+    labels : *default_labels
+    records:
+      - name : ns1.ctlabs.internal.
+        type : NS
+        value: 172.25.70.2
+
 network:
   - name : net1
   - name : net2
