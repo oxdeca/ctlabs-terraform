@@ -126,7 +126,7 @@ module "firewall" {
 #
 
 module "dns" {
-  source "../dns"
+  source = "../dns"
 
   dns = try( var.config.dns, [] )
 
