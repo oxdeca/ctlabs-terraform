@@ -144,6 +144,16 @@ resource "google_compute_instance" "vm" {
   depends_on = [google_compute_disk.attached]
 }
 
+resource "google_dns_record_set" "rr" {
+  for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
+
+  managed_zone = replace( each.value.domain, ".", "-" )
+  name         = "${each.value.name}.${each.value.domain}."
+  project      = var.project.shared_vpc
+  type         = "A"
+  rrdatas      = [google_compute_instance.vm[each.key].network_interface.0.network_ip]
+}
+
 #resource "null_resource" "cost_estimation1" {
 #  provisioner "local-exec" {
 #    command = "echo 'For Cost Estimation check: https://cloudbilling.googleapis.com/v2beta/services'"

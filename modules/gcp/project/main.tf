@@ -5,7 +5,7 @@
 
 locals {
   defaults = {
-    "host_vpc"      = false,
+    "vpc_type"      = "regular",
     "sa_delete"     = true,
     "delete_policy" = "DELETE",
   }
@@ -43,18 +43,18 @@ resource "google_project_default_service_accounts" "sa" {
   depends_on     = [google_project.prj, google_project_service.compute]
 }
 
-resource "google_compute_shared_vpc_host_project" "host_vpc" {
-  count = try( var.project.host_vpc, local.defaults.host_vpc ) ? 1 : 0
+resource "google_compute_shared_vpc_host_project" "shared_vpc" {
+  count = try( var.project.vpc_type, local.defaults.vpc_type ) == "shared" ? 1 : 0
 
   project = var.project.id
-  
+
   depends_on = [google_project.prj, google_project_service.compute]
 }
 
-resource "google_compute_shared_vpc_service_project" "service_project" {
-  count = try( var.project.host_project, null ) != null ? 1 : 0
+resource "google_compute_shared_vpc_service_project" "service_vpc" {
+  count = try( var.project.vpc_type, local.defaults.vpc_type ) == "service" ? 1 : 0
 
-  host_project    = var.project.host_project
+  host_project    = var.project.shared_vpc
   service_project = var.project.id
 
   depends_on = [google_project.prj, google_project_service.compute]
