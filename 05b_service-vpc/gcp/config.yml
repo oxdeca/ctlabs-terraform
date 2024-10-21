@@ -78,6 +78,7 @@ buckets:
 
 vms:
   - name     : vm-1
+    domain   : ctlabs.internal
     type     : e2-micro
     image    : centos-stream-9-v20240213
     #image   : debian-11-bullseye-v20240213
@@ -93,6 +94,7 @@ vms:
       ctlabs: service_account_given
 
   - name     : vm-2
+    domain   : ctlabs.internal
     type     : e2-micro
     #image    : centos-stream-9-v20240213
     image    : debian-11-bullseye-v20240213
@@ -106,6 +108,7 @@ vms:
       ctlabs: no_service_account
 
   - name     : vm-3
+    domain   : ctlabs.internal
     type     : e2-micro
     #image    : centos-stream-9-v20240213
     image    : debian-12-bookworm-v20240910
