@@ -151,6 +151,7 @@ resource "google_dns_record_set" "rr" {
   name         = "${each.value.name}.${each.value.domain}."
   project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
   type         = "A"
+  ttl          = 21600
   rrdatas      = [google_compute_instance.vm[each.key].network_interface.0.network_ip]
 }
 
