@@ -128,7 +128,8 @@ module "firewall" {
 module "dns" {
   source = "../dns"
 
-  dns = try( var.config.dns, [] )
+  project = try( var.project, [] )
+  dns     = try( var.config.dns, [] )
 
   depends_on = [module.net]
 }

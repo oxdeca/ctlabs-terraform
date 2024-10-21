@@ -3,4 +3,5 @@
 # Description : dns module variables
 # -----------------------------------------------------------------------------
 
-variable dns { type = any }
+variable project { type = any }
+variable dns     { type = any }

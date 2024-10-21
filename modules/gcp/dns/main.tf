@@ -10,7 +10,7 @@ locals {
     },
     "rr" = {
       "type" = "A",
-      "ttl"  = 86400,
+      "ttl"  = 21600,
     },
   }
 }
@@ -19,8 +19,18 @@ resource "google_dns_managed_zone" "zone" {
   for_each = { for zk, zv in var.dns : zk => zv }
 
   name        = each.key
-  dns_name    = each.value.domain
+  dns_name    = "${each.value.domain}."
   description = each.value.desc
   labels      = each.value.labels
-}
+  visibility  = try(each.value.type, local.defaults.zone.visibility)
 
+  private_visibility_config {
+    dynamic networks {
+      for_each = toset(each.value.networks)
+      content {
+        network_url = try("projects/${var.project.id}/global/networks/${networks.value}", null)
+      }
+    }
+  }
+
+}
