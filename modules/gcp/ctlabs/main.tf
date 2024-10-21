@@ -146,7 +146,7 @@ module "vm" {
   project = try( var.project, [] )
   vms     = try( var.config.vms, [] )
 
-  depends_on = [module.net, module.subnet]
+  depends_on = [module.net, module.subnet, module.dns]
 }
 
 # -------------------------------------------------------------------------------------------
