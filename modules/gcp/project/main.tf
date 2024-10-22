@@ -14,8 +14,8 @@ locals {
 resource "google_project" "prj" {
   name            = var.project.name
   project_id      = var.project.id
-  org_id          = var.folder_id   == null ? var.project.oid    : null
-  folder_id       = var.project.oid == null ? var.project.folder : null
+  org_id          = try( var.project.fid, null ) == null ? var.project.oid : null
+  folder_id       = try( var.project.oid, null ) == null ? var.project.fid : null
   billing_account = var.project.billing
   labels          = var.project.labels
   deletion_policy = try( var.project.delete_policy, local.defaults.delete_policy )
