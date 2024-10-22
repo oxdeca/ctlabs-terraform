@@ -12,7 +12,7 @@ locals {
     "prio"   = 1000, 
     "log"    = true, 
     "action" = "allow"
-  },
+  }
   ingress = flatten( [ for netk, netv in var.firewall : [ for rule in netv.ingress: merge( { net_id = netk }, rule ) ] ] )
   egress  = flatten( [ for netk, netv in var.firewall : [ for rule in netv.egress : merge( { net_id = netk }, rule ) ] ] )
 }
