@@ -81,6 +81,7 @@ resource "google_compute_instance" "vm" {
 
   project                   = var.project.id
   name                      = each.value.name
+  hostname                  = try( "${each.value.name}.${each.value.domain}", each.value.name )
   machine_type              = each.value.type
   allow_stopping_for_update = true
   labels                    = each.value.labels
