@@ -56,7 +56,7 @@ locals {
 module "services" {
   source = "../services"
 
-  services = try( concat(var.config.services, local.services), [] )
+  services = try( concat(var.config.services, local.services), local.services )
   project  = try( var.project, [] )
 
   depends_on = [module.project]
