@@ -33,13 +33,18 @@ module "project" {
 # Services
 #
 locals {
-  services = flatten([
-    (try(var.config.network,      null) != null ? "compute.googleapis.com" : null),
-    (try(var.config.vms,          null) != null ? ["compute.googleapis.com", "iam.googleapis.com", "dns.googleapis.com"] : null ),
-    (try(var.config.iam_roles,    null) != null ? "iam.googleapis.com" : null),
-    (try(var.config.iam_bindings, null) != null ? "iam.googleapis.com" : null),
-    (try(var.config.functions,    null) != null ? ["cloudfunctions.googleapis.com","cloudbuild.googleapis.com"] : null),
-  ])
+  services = [
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+    "dns.googleapis.com",
+  ]
+
+#    (try(var.config.network,      null) != null ? "compute.googleapis.com" : null),
+#    (try(var.config.vms,          null) != null ? ["compute.googleapis.com", "iam.googleapis.com", "dns.googleapis.com"] : null ),
+#    (try(var.config.iam_roles,    null) != null ? "iam.googleapis.com" : null),
+#    (try(var.config.iam_bindings, null) != null ? "iam.googleapis.com" : null),
+#    (try(var.config.functions,    null) != null ? ["cloudfunctions.googleapis.com","cloudbuild.googleapis.com"] : null),
+#  ]
 }
 
 # services:
