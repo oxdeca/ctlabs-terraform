@@ -32,6 +32,14 @@ module "project" {
 #
 # Services
 #
+locals {
+  services = flatten([
+    (var.config.network != null ? "compute.googleapis.com" : null),
+    (var.config.vms     != null ? ["compute.googleapis.com", "iam.googleapis.com", "dns.googleapis.com"] : null ),
+    (var.config.iam     != null ? "iam.googleapis.com" : null),
+  ])
+}
+
 module "services" {
   source = "../services"
 
