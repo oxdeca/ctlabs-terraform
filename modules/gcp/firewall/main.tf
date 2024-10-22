@@ -5,6 +5,7 @@
 
 locals {
   defaults = {
+    "proto"  = "tcp",
     "prio"   = 1000, 
     "log"    = true, 
     "action" = "allow"
