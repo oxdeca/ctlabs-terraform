@@ -5,9 +5,6 @@
 
 locals {
   defaults = {
-    "services" = [
-      "compute.googleapis.com",
-    ]
     "netflow" = {
       "aggregate" = "INTERVAL_10_MIN",
       "sampling"  = 0.5,
@@ -15,13 +12,6 @@ locals {
     }
   }
   subnets = flatten ( [ for netk, netv in var.subnets: [ for sub in netv: merge( { net_id = netk, }, sub ) ] ] )
-}
-
-resource "google_project_service" "services" {
-  for_each = toset(local.defaults.services)
-
-  project = var.project.id
-  service = each.key
 }
 
 resource "google_compute_subnetwork" "sub" {

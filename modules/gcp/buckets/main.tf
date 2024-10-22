@@ -5,9 +5,6 @@
 
 locals {
   defaults = {
-    "services" = [
-      "storage-component.googleapis.com",
-    ]
     "class"     = "STANDARD",
     "access"    = "inherited",
     "retention" = false,
@@ -16,13 +13,6 @@ locals {
       "ctlabs_created" = true
     }
   }
-}
-
-resource "google_project_service" "services" {
-  for_each = toset(local.defaults.services)
-
-  project = var.project.id
-  service = each.key
 }
 
 resource "google_storage_bucket" "bucket" {
@@ -36,8 +26,6 @@ resource "google_storage_bucket" "bucket" {
   storage_class            = try( each.value.class,     local.defaults.class     )
   enable_object_retention  = try( each.value.retention, local.defaults.retention )
   public_access_prevention = try( each.value.access,    local.defaults.access    )
-
-  depends_on = [google_project_service.services]
 }
 
 #resource "google_storage_bucket_iam_binding" "iam" {

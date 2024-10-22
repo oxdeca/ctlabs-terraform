@@ -5,23 +5,12 @@
 
 locals {
   defaults = {
-    "services" = [
-      "compute.googleapis.com"
-    ],
-    "proto"  = "tcp", 
     "prio"   = 1000, 
     "log"    = true, 
     "action" = "allow"
   }
   ingress = flatten( [ for netk, netv in var.firewall : [ for rule in netv.ingress: merge( { net_id = netk }, rule ) ] ] )
   egress  = flatten( [ for netk, netv in var.firewall : [ for rule in netv.egress : merge( { net_id = netk }, rule ) ] ] )
-}
-
-resource "google_project_service" "services" {
-  for_each = toset(local.defaults.services)
-
-  project = var.project.id
-  service = each.key
 }
 
 resource "google_compute_firewall" "ingress" {
@@ -56,8 +45,6 @@ resource "google_compute_firewall" "ingress" {
       metadata = "EXCLUDE_ALL_METADATA"
     }
   }
-
-  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_firewall" "egress" {
@@ -92,6 +79,4 @@ resource "google_compute_firewall" "egress" {
       metadata = "EXCLUDE_ALL_METADATA"
     }
   }
-
-  depends_on = [google_project_service.services]
 }

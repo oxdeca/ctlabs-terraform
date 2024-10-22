@@ -5,18 +5,8 @@
 
 locals {
   defaults = {
-    "services" = [
-      "compute.googleapis.com",
-    ],
     "subnets" = false,
   }
-}
-
-resource "google_project_service" "services" {
-  for_each = toset(local.defaults.services)
-
-  project = var.project.id
-  service = each.key
 }
 
 resource "google_compute_network" "net" {
@@ -24,6 +14,4 @@ resource "google_compute_network" "net" {
 
   name                    = each.value.name
   auto_create_subnetworks = try( each.value.subnets, local.defaults.subnets )
-
-  depends_on = [google_project_service.services]
 }

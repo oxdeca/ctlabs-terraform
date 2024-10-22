@@ -5,11 +5,6 @@
 
 locals {
   defaults = {
-    "services" = [
-      "compute.googleapis.com",
-      "iam.googleapis.com",
-      "dns.googleapis.com",
-    ]
     "disk" = { 
       "type" = "pd-standard", 
       "size" = "10" 
@@ -28,21 +23,12 @@ locals {
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
 
-resource "google_project_service" "services" {
-  for_each = toset(local.defaults.services)
-
-  project = var.project.id
-  service = each.key
-}
-
 resource "google_service_account" "sa" {
   for_each = { for vm in var.vms : vm.name => vm }
 
   account_id   = "${local.defaults.sa_prefix}${each.value.name}"
   display_name = try( each.value.name, null )
   description  = try( each.value.desc, null )
-
-  depends_on = [google_project_service.services]
 }
 
 
@@ -70,8 +56,6 @@ resource "google_compute_disk" "attached" {
   lifecycle {
     prevent_destroy = false
   }
-
-  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_instance" "vm" {
@@ -158,7 +142,7 @@ resource "google_compute_instance" "vm" {
     }
   }
 
-  depends_on = [google_project_service.services, google_compute_disk.attached]
+  depends_on = [google_compute_disk.attached]
 }
 
 resource "google_dns_record_set" "rr" {
@@ -171,7 +155,7 @@ resource "google_dns_record_set" "rr" {
   ttl          = 21600
   rrdatas      = [google_compute_instance.vm[each.key].network_interface.0.network_ip]
 
-  depends_on = [google_project_service.services, google_compute_instance.vm]
+  depends_on = [google_compute_instance.vm]
 }
 
 #resource "null_resource" "cost_estimation1" {

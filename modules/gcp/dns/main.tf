@@ -5,9 +5,6 @@
 
 locals {
   defaults = {
-    "services" = [
-      "dns.googleapis.com",
-    ]
     "zone" = {
       "visibility" = "private",
     },
@@ -16,13 +13,6 @@ locals {
       "ttl"  = 21600,
     },
   }
-}
-
-resource "google_project_service" "services" {
-  for_each = toset(local.defaults.services)
-
-  project = var.project.id
-  service = each.key
 }
 
 resource "google_dns_managed_zone" "zone" {
@@ -42,6 +32,4 @@ resource "google_dns_managed_zone" "zone" {
       }
     }
   }
-
-  depends_on = [google_project_service.services]
 }
