@@ -63,5 +63,5 @@ resource "google_cloudfunctions_function" "func" {
   labels                = try( each.value.labels,   null )
   environment_variables = try( each.value.env_vars, null )
 
-  depends_on            = [google_project_service.services, google_project_service.function, google_storage_bucket_object.code, google_service_account.sa]
+  depends_on            = [google_project_service.services, google_project_service.services, google_storage_bucket_object.code, google_service_account.sa]
 }
