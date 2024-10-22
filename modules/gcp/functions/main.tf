@@ -7,9 +7,22 @@
 
 locals {
   defaults = {
+    "services" = [
+      "storage-component.googleapis.com",
+      "cloudfunctions.googleapis.com",
+      "cloudbuild.googleapis.com",
+      "iam.googleapis.com"
+    ]
     "sa_prefix" = "crf-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
+}
+
+resource "google_project_service" "services" {
+  for_each = toset(local.defaults.services)
+
+  project  = var.project.id
+  service  = each.value
 }
 
 resource "google_service_account" "sa" {
@@ -18,20 +31,8 @@ resource "google_service_account" "sa" {
   account_id   = "${local.defaults.sa_prefix}${replace(each.value.name, "_", "-")}"
   display_name = try( each.value.name, null )
   description  = try( each.value.desc, null )
-}
 
-resource "google_project_service" "function" {
-  for_each = toset(["cloudfunctions.googleapis.com", "cloudbuild.googleapis.com"])
-
-  project  = var.project.id
-  service  = each.value
-
-  timeouts {
-    create = "30m"
-    delete = "30m"
-  }
-
-  depends_on = [google_service_account.sa]
+  depends_on = [google_project_service.services]
 }
 
 resource "google_storage_bucket_object" "code" {
@@ -41,7 +42,7 @@ resource "google_storage_bucket_object" "code" {
   source = each.value.source
   bucket = "${var.project.id}--${each.value.bucket}"
 
-  depends_on = [google_service_account.sa]
+  depends_on = [google_project_service.services, google_service_account.sa]
 }
 
 resource "google_cloudfunctions_function" "func" {
@@ -62,5 +63,5 @@ resource "google_cloudfunctions_function" "func" {
   labels                = try( each.value.labels,   null )
   environment_variables = try( each.value.env_vars, null )
 
-  depends_on            = [google_project_service.function, google_storage_bucket_object.code, google_service_account.sa]
+  depends_on            = [google_project_service.services, google_project_service.function, google_storage_bucket_object.code, google_service_account.sa]
 }

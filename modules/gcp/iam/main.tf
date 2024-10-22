@@ -3,6 +3,22 @@
 # Description : iam bindings
 # -----------------------------------------------------------------------------
 
+locals {
+  defaults = {
+    "services" = [
+      "iam.googleapis.com",
+    ]
+  }
+}
+
+
+resource "google_project_service" "services" {
+  for_each = toset(local.defaults.services)
+
+  project  = var.project.id
+  service  = each.value
+}
+
 resource "google_project_iam_custom_role" "role" {
   for_each = { for role in var.roles : role.id => role }
 
