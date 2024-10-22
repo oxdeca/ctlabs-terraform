@@ -3,4 +3,5 @@
 # Description : net module variables
 # -----------------------------------------------------------------------------
 
-variable nets { type = any }
+variable project { type = any }
+variable nets    { type = any }

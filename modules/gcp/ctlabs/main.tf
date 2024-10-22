@@ -91,7 +91,8 @@ module "iam" {
 module "net" {
   source = "../net"
 
-  nets = try( var.config.network, [] )
+  project = try( var.project, [] )
+  nets    = try( var.config.network, [] )
 
   depends_on = [module.project, module.services]
 }
