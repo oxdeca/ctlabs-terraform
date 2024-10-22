@@ -3,6 +3,7 @@
 # Description : firewall module variables
 # -----------------------------------------------------------------------------
 
+variable project  { type = any }
 variable firewall { type = any } 
 #variable egress { type    = any     }
 #variable action { default = "allow" }

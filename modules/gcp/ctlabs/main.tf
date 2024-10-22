@@ -115,6 +115,7 @@ module "subnet" {
 module "firewall" {
   source = "../firewall"
 
+  project  = try( var.project, [] )
   firewall = try( var.config.firewall, [] )
 
   depends_on = [module.net]
