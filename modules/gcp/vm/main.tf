@@ -97,7 +97,7 @@ resource "google_compute_instance" "vm" {
 
   network_interface {
     subnetwork = try( var.project.vpc_type, "") == "service" ? "projects/${var.project.shared_vpc}/${each.value.net}" : each.value.net
-    network_ip = try( var.ipv4, null )
+    network_ip = try( each.value.ipv4, null )
 
     dynamic access_config {
       for_each = try( each.value.nat, local.defaults.nat ) ? toset([1]) : toset([])
