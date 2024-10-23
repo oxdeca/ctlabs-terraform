@@ -7,7 +7,7 @@ locals {
   defaults = {
     "vpc_type"      = "regular",
     "sa_delete"     = true,
-    "delete_policy" = "DELETE",
+    "delete_policy" = "ABANDON",
   }
 }
 
