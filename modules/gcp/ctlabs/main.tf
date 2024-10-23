@@ -34,9 +34,10 @@ module "project" {
 #
 locals {
   services = compact([
-    "compute.googleapis.com", try(var.config.bigquery, null) != null ? "bigquery.googleapis.com" : "",
+    "compute.googleapis.com", 
     "iam.googleapis.com",
-    "dns.googleapis.com",
+    try(var.config.vms, var.config.dns, null) != null ? "dns.googleapis.com",     : "",
+    try(var.config.bigquery, null)            != null ? "bigquery.googleapis.com" : "",
   ])
 
 #    (try(var.config.network,      null) != null ? "compute.googleapis.com" : null),
