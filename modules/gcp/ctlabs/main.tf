@@ -43,6 +43,7 @@ locals {
     try(var.config.function, null)            != null ? "cloudfunctions.googleapis.com"    : "",
     try(var.config.function, null)            != null ? "cloudfbuild.googleapis.com"       : "",
     try(var.config.function, null)            != null ? "storage-component.googleapis.com" : "",
+    try(var.config.function, null)            != null ? "artifactregistry.googleapis.com"  : "",
   ])
 }
 
