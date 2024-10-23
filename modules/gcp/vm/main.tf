@@ -14,9 +14,12 @@ locals {
       "lifespan" = 2, 
       "action"   = "DELETE" 
     },
+    "type"       = "e2-micro",
     "oslogin"    = false,
     "nat"        = false,
     "nested"     = false,
+    "protected"  = false,
+    "update"     = true,
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
@@ -37,8 +40,7 @@ resource "google_compute_disk" "attached" {
   name     = "${each.value.vm_id}-${each.value.disk_id}"
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
-  #zone     = var.zone
-  #labels   = var.labels
+  labels   = try( each.value.labels, {} )
 
 
   # as removing/changing a disk configurations isn't expected to happen often and
@@ -66,8 +68,9 @@ resource "google_compute_instance" "vm" {
   project                   = var.project.id
   name                      = each.value.name
   hostname                  = try( "${each.value.name}.${each.value.domain}", each.value.name )
-  machine_type              = each.value.type
-  allow_stopping_for_update = true
+  machine_type              = try( each.value.type, local.defaults.type )
+  allow_stopping_for_update = try( each.value.update, local.defaults.update )
+  deletion_protection       = try( each.value.protected, local.defaults.protected )
   labels                    = each.value.labels
 
   boot_disk {
@@ -76,8 +79,6 @@ resource "google_compute_instance" "vm" {
       image = each.value.image
       type  = try( each.value.disks.boot.type, null )
       size  = try( each.value.disks.boot.size, null )
-      #type  = try( each.value.disks[index(each.value.disks.*.name, "boot")].type, null )
-      #size  = try( each.value.disks[index(each.value.disks.*.name, "boot")].size, null )
     }
   }
 
@@ -95,7 +96,8 @@ resource "google_compute_instance" "vm" {
   }
 
   network_interface {
-    subnetwork = try(var.project.vpc_type, "") == "service" ? "projects/${var.project.shared_vpc}/${each.value.net}" : each.value.net
+    subnetwork = try( var.project.vpc_type, "") == "service" ? "projects/${var.project.shared_vpc}/${each.value.net}" : each.value.net
+    network_ip = try( var.ipv4, null )
 
     dynamic access_config {
       for_each = try( each.value.nat, local.defaults.nat ) ? toset([1]) : toset([])
@@ -113,13 +115,6 @@ resource "google_compute_instance" "vm" {
     startup-script = try( file("${each.value.script}"), "" )
   }
 
-#  dynamic service_account {
-#    for_each = try(each.value.service_account, null) != null ? toset([1]) : toset([])
-#    content {
-#      email  = try( each.value.service_account.email, null )
-#      scopes = concat( ["cloud-platform"], try( each.value.service_account.scopes, [] ))
-#    }
-# }
   dynamic service_account {
     for_each = try(each.value.name, null) != null ? toset([1]) : toset([])
     content {
