@@ -66,7 +66,7 @@ resource "google_compute_instance" "vm" {
 
   project                   = var.project.id
   name                      = each.value.name
-  hostname                  = try( "${each.value.name}.${each.value.domain}", each.value.name )
+  hostname                  = try( "${each.value.name}.${each.value.domain}", null )
   machine_type              = try( each.value.type, local.defaults.type )
   allow_stopping_for_update = try( each.value.update, local.defaults.update )
   deletion_protection       = try( each.value.protected, local.defaults.protected )
