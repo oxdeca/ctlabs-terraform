@@ -36,27 +36,14 @@ locals {
   services = compact([
     "compute.googleapis.com", 
     "iam.googleapis.com",
-    try(var.config.vms, var.config.dns, null) != null ? "dns.googleapis.com",     : "",
-    try(var.config.bigquery, null)            != null ? "bigquery.googleapis.com" : "",
+    "secretmanager.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    try(var.config.vms, var.config.dns, null) != null ? "dns.googleapis.com",              : "",
+    try(var.config.bigquery, null)            != null ? "bigquery.googleapis.com"          : "",
+    try(var.config.function, null)            != null ? "cloudfunctions.googleapis.com"    : "",
+    try(var.config.function, null)            != null ? "cloudfbuild.googleapis.com"       : "",
+    try(var.config.function, null)            != null ? "storage-component.googleapis.com" : "",
   ])
-
-#    (try(var.config.network,      null) != null ? "compute.googleapis.com" : null),
-#    (try(var.config.vms,          null) != null ? ["compute.googleapis.com", "iam.googleapis.com", "dns.googleapis.com"] : null ),
-#    (try(var.config.iam_roles,    null) != null ? "iam.googleapis.com" : null),
-#    (try(var.config.iam_bindings, null) != null ? "iam.googleapis.com" : null),
-#    (try(var.config.functions,    null) != null ? ["cloudfunctions.googleapis.com","cloudbuild.googleapis.com"] : null),
-#  ]
-}
-
-# services:
-#   - iam.googleapis.com
-#   - cloudresourcemanager.googleapis.com
-#   - secretmanager.googleapis.com
-#   - compute.googleapis.com
-#   - dns.googleapis.com
-#   - storage-component.googleapis.com
-#   - cloudfunctions.googleapis.com
-#   - cloudbuild.googleapis.com
 
 
 module "services" {
