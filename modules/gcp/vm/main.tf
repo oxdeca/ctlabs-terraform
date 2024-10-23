@@ -41,6 +41,7 @@ resource "google_compute_disk" "attached" {
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
   labels   = try( each.value.labels, {} )
+  tags     = try( each.value.tags, [] )
 
 
   # as removing/changing a disk configurations isn't expected to happen often and
