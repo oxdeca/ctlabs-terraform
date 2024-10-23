@@ -5,20 +5,22 @@
 
 locals {
   defaults = {
-    "vpc_type"      = "regular",
-    "sa_delete"     = true,
-    "delete_policy" = "ABANDON",
+    "vpc_type"       = "regular",
+    "sa_delete"      = true,
+    "delete_policy"  = "ABANDON",
+    "create_network" = false,
   }
 }
 
 resource "google_project" "prj" {
-  name            = var.project.name
-  project_id      = var.project.id
-  org_id          = try( var.project.fid, null ) == null ? var.project.oid : null
-  folder_id       = try( var.project.oid, null ) == null ? var.project.fid : null
-  billing_account = var.project.billing
-  labels          = var.project.labels
-  deletion_policy = try( var.project.delete_policy, local.defaults.delete_policy )
+  name                = var.project.name
+  project_id          = var.project.id
+  org_id              = try( var.project.fid, null ) == null ? var.project.oid : null
+  folder_id           = try( var.project.oid, null ) == null ? var.project.fid : null
+  billing_account     = var.project.billing
+  labels              = var.project.labels
+  deletion_policy     = try( var.project.delete_policy, local.defaults.delete_policy )
+  auto_create_network = try( var.project.create_network, local.defaults.create_network )
 }
 
 resource "google_project_service" "compute" {
