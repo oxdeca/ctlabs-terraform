@@ -41,8 +41,6 @@ resource "google_compute_disk" "attached" {
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
   labels   = try( each.value.labels, {} )
-  tags     = try( each.value.tags, [] )
-
 
   # as removing/changing a disk configurations isn't expected to happen often and
   # because a disk configuration change(rename, reduce size) recreates a disk 
@@ -72,7 +70,8 @@ resource "google_compute_instance" "vm" {
   machine_type              = try( each.value.type, local.defaults.type )
   allow_stopping_for_update = try( each.value.update, local.defaults.update )
   deletion_protection       = try( each.value.protected, local.defaults.protected )
-  labels                    = each.value.labels
+  labels                    = try( each.value.labels, {} )
+  tags                      = try( each.value.tags, [] )
 
   boot_disk {
     device_name  = "${each.value.name}-boot"
