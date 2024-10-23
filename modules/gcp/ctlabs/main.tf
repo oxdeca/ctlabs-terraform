@@ -38,11 +38,11 @@ locals {
     "iam.googleapis.com",
     "secretmanager.googleapis.com",
     "cloudresourcemanager.googleapis.com",
-    try(var.config.vms, var.config.dns, null) != null ? "dns.googleapis.com",              : "",
+    try(var.config.vms, var.config.dns, null) != null ? "dns.googleapis.com"               : "",
     try(var.config.bigquery, null)            != null ? "bigquery.googleapis.com"          : "",
     try(var.config.function, null)            != null ? "cloudfunctions.googleapis.com"    : "",
     try(var.config.function, null)            != null ? "cloudfbuild.googleapis.com"       : "",
-    try(var.config.function, null)            != null ? "storage-component.googleapis.com" : "",
+    try(var.config.function, null)            != null ? "storage-component.googleapis.com" : ""
   ])
 
 
