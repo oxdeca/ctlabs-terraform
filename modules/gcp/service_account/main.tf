@@ -12,7 +12,7 @@ resource "google_service_account" "sa" {
 }
 
 resource "google_service_account_key" "sa_key" {
-  for_each = { for sa in var.service_accounts : sa.name => sa if.sa.key == true }
+  for_each = { for sa in var.service_accounts : sa.name => sa if sa.key == true }
 
   service_account_id = google_service_account.sa[each.value.name].name
   public_key_type = "TYPE_X509_PEM_FILE"
