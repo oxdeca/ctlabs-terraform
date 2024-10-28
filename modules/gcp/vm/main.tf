@@ -14,6 +14,9 @@ locals {
       "lifespan" = 2, 
       "action"   = "DELETE" 
     },
+    "dns" = {
+      "ttl" = 600,
+    }
     "type"       = "e2-micro",
     "oslogin"    = false,
     "nat"        = false,
@@ -147,8 +150,21 @@ resource "google_dns_record_set" "rr" {
   name         = "${each.value.name}.${each.value.domain}."
   project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
   type         = "A"
-  ttl          = 21600
+  ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
   rrdatas      = [google_compute_instance.vm[each.key].network_interface.0.network_ip]
+
+  depends_on = [google_compute_instance.vm]
+}
+
+resource "google_dns_record_set" "ptr" {
+  for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
+
+  managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
+  name         = google_compute_instance.vm[each.key].network_interface.0.network_ip
+  project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
+  type         = "PTR"
+  ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
+  rrdatas      = ["${each.value.name}.${each.value.domain}."]
 
   depends_on = [google_compute_instance.vm]
 }
