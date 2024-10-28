@@ -20,8 +20,8 @@ resource "google_dns_managed_zone" "zone" {
 
   name        = each.key
   dns_name    = "${each.value.domain}."
-  description = each.value.desc
-  labels      = each.value.labels
+  description = try(each.value.desc, null)
+  labels      = try(each.value.labels, null)
   visibility  = try(each.value.type, local.defaults.zone.visibility)
 
   private_visibility_config {
