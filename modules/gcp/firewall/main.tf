@@ -5,10 +5,11 @@
 
 locals {
   defaults = {
-    "proto"  = "tcp",
-    "prio"   = 1000, 
-    "log"    = true, 
-    "action" = "allow"
+    "proto"    = "tcp",
+    "prio"     = 1000, 
+    "action"   = "allow",
+    "log"      = true,
+    "metadata" = "EXCLUDE_ALL_METADATA",
   }
   ingress = flatten( [ for netk, netv in var.firewall : [ for rule in netv.ingress: merge( { net_id = netk }, rule ) ] ] )
   egress  = flatten( [ for netk, netv in var.firewall : [ for rule in netv.egress : merge( { net_id = netk }, rule ) ] ] )
@@ -21,6 +22,7 @@ resource "google_compute_firewall" "ingress" {
   name          = each.value.name
   network       = each.value.net_id
   source_ranges = each.value.src
+  source_tags   = try( each.value.tags, null )
   priority      = try( each.value.prio, local.defaults.prio )
   description   = try( each.value.desc, null )
 
@@ -43,7 +45,7 @@ resource "google_compute_firewall" "ingress" {
   dynamic log_config {
     for_each = try( each.value.log, local.defaults.log ) == true ? toset([try( each.value.log, local.defaults.log )]) : toset([])
     content {
-      metadata = "EXCLUDE_ALL_METADATA"
+      metadata = try( each.value.metadata, local.defaults.metadata )
     }
   }
 }
@@ -55,6 +57,7 @@ resource "google_compute_firewall" "egress" {
   network            = each.value.net_id
   name               = each.value.name
   destination_ranges = each.value.dst
+  target_tags        = try( each.value.tags, null )
   priority           = try( each.value.prio, local.defaults.prio )
   description        = try( each.value.desc, null )
 
@@ -77,7 +80,7 @@ resource "google_compute_firewall" "egress" {
   dynamic log_config {
     for_each = try( each.value.log, local.defaults.log ) == true ? toset([try( each.value.log, local.defaults.log )]) : toset([])
     content {
-      metadata = "EXCLUDE_ALL_METADATA"
+      metadata = try( each.value.metadata, local.defaults.metadata )
     }
   }
 }

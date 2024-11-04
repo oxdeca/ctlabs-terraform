@@ -20,12 +20,14 @@ BASH=/bin/bash
 ECHO=/usr/bin/echo
 CURL=/usr/bin/curl
 SCTL=/usr/bin/systemctl
+MAKE=/usr/bin/make
 CHMOD=/usr/bin/chmod
 MKDIR=/usr/bin/mkdir
 PYTHON=/usr/bin/python3
 DOCKER=/usr/bin/docker
 TOUCH=/usr/bin/touch
 BASE64=/usr/bin/base64
+SYSTEMCTL=/usr/bin/systemctl
 
 
 # -----------------------------------------------------------------------------
@@ -54,6 +56,7 @@ PKGS=(
   'ipvsadm'
   'qemu-img'
   'cloud-utils-growpart'
+  'make'
 )
 
 GEMS=(
@@ -63,15 +66,11 @@ GEMS=(
 )
 
 CTIMGS=(
-  '/root/ctlabs/images/centos/c9/base'
-  '/root/ctlabs/images/centos/c9/ctrl'
-  '/root/ctlabs/images/centos/c9/frr'
-  '/root/ctlabs/images/kali/base'
-  '/root/ctlabs/images/kali/ctf'
-  '/root/ctlabs/images/debian/d11/base'
-  '/root/ctlabs/images/debian/d11/smbadc'
-  '/root/ctlabs/images/owasp/zap'
-  '/root/ctlabs/images/centos/c9/xv6'
+  '/root/ctlabs/images/centos/c9'
+  '/root/ctlabs/images/debian/d11'
+  '/root/ctlabs/images/debian/d12'
+  '/root/ctlabs/images/kali'
+  '/root/ctlabs/images/owasp'
 )
 
 BASHRC_KALI='
@@ -202,24 +201,18 @@ os_update() {
 }
 
 packages() {
-  ${ECHO} -en $BASHRC_KALI | ${SED} 's@ @\n@g' | ${BASE64} -d > /etc/profile.d/bashrc_kali.sh
-  ${ECHO} "set paste" >> /etc/vimrc
-  ${TOUCH} /etc/containers/nodocker
-
   for p in "${PKGS[@]}"; do
     ${DNF} -y install "${p}"
   done
 
-	#${DNF} -y install ${PKGS[*]}
-	${GEM} install ${GEMS[*]}
+  ${TOUCH} /etc/containers/nodocker
+  #${DNF} -y install ${PKGS[*]}
+  ${GEM} install ${GEMS[*]}
 }
 
-services() {
-  ${SCTL} disable --now firewalld.service
-}
-
-aliases() {
+config() {
   ${MKDIR} -vp /etc/ansible/facts.d
+
   ${ECHO} '
   alias vi="/usr/bin/vim"
   alias pva=". ~/virtenv/bin/activate"
@@ -232,8 +225,16 @@ aliases() {
   function enter() {
     docker exec -it -w ~/ ${1} bash
   }
-  ' >> /root/.bashrc
+  ' > /etc/profile.d/bashrc_ctlabs.sh
+
+  ${ECHO} -en $BASHRC_KALI | ${SED} 's@ @\n@g' | ${BASE64} -d > /etc/profile.d/bashrc_kali.sh
+  ${ECHO} "set paste" >> /etc/vimrc
 }
+
+services() {
+  ${SCTL} disable --now firewalld.service
+}
+
 
 tmux() {
 cat > /root/.tmux.conf << EOF
@@ -310,7 +311,7 @@ clone_repo() {
 ctimages() {
   for d in "${CTIMGS[@]}"; do
     cd ${d}
-    ${BASH} ./build.sh
+    ${MAKE}
   done
 }
 
@@ -319,23 +320,16 @@ selinux() {
   ${SED} -ri 's@(SELINUX=).*@\1permissive@' /etc/selinux/config
 }
 
-kind() {
-  ${CURL} -sLo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64 && ${MV} ./kind /usr/bin/kind && chmod 0750 /usr/bin/kind
-}
-
-
-
 # -----------------------------------------------------------------------------
 # MAIN
 # -----------------------------------------------------------------------------
 #
-aliases
+selinux
+config
 tmux
+os_update
 packages
 services
-#os_update
-selinux
 
-kind
 clone_repo
 ctimages

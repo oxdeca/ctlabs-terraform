@@ -65,8 +65,8 @@ iam_roles:
       - compute.instanceGroups.list
 
 iam_bindings:
-  - role: VaultServiceRole
-    type: project
+  - role   : VaultServiceRole
+    level  : project
     members:
       - "serviceAccount:vault-service-account"
 
