@@ -27,7 +27,7 @@ resource "google_project_iam_binding" "binding" {
   for_each = { for binding in var.bindings : binding.role => binding }
 
   project    = var.project.id
-  role       = "${try(each.value.level, local.defaults.binding.level)}/${each.value.level "organisaztions" ? var.project.oid : var.project.id}/roles/${each.value.role}"
+  role       = "${try(each.value.level, local.defaults.binding.level)}/${each.value.level == "organisaztions" ? var.project.oid : var.project.id}/roles/${each.value.role}"
   members    = [ for member in each.value.members : "${member}@${var.project.id}.iam.gserviceaccount.com" ]
   depends_on = [google_project_iam_custom_role.role]
 }
