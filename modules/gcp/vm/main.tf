@@ -114,7 +114,7 @@ resource "google_compute_instance" "vm" {
     enable_nested_virtualization = try( each.value.nested, local.defaults.nested )
   }
 
-  metadata = {
+  metadata {
     enable-oslogin = try( each.value.oslogin, local.defaults.oslogin )
     startup-script = try( file("${each.value.script}"), "" )
 
