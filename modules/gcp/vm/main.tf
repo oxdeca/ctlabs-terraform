@@ -118,12 +118,12 @@ resource "google_compute_instance" "vm" {
     enable-oslogin = try( each.value.oslogin, local.defaults.oslogin )
     startup-script = try( file("${each.value.script}"), "" )
 
-    dynamic "items" {
+    dynamic items {
       for_each = try( each.value.metadata, local.defaults.metadata )
 
       content {
-        key   = items.key
-        value = items.value
+        key   : items.key
+        value : items.value
       }
     }
   }
