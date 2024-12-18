@@ -26,7 +26,7 @@ locals {
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
     "metadata"   = {
-      enable-oslogin = local.defaults.oslogin
+      enable-oslogin = false
       startup-script = ""
     }
   }
@@ -117,13 +117,10 @@ resource "google_compute_instance" "vm" {
     enable_nested_virtualization = try( each.value.nested, local.defaults.nested )
   }
 
-  dynamic metadata {
-    for_each = try( merge(local.defaults.metadata, each.value.metadata), local.defaults.metadata )
-    content {
-      key   = items.key
-      value = items.value
-    }
-  }
+  metadata = merge({
+      enable-oslogin = try( each.value.oslogin, local.defaults.oslogin )
+      startup-script = try( file("${each.value.script}"), "" )
+    }, try( each.value.metadata, {} ) )
 
   dynamic service_account {
     for_each = try(each.value.name, null) != null ? toset([1]) : toset([])
