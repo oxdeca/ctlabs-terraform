@@ -5,3 +5,4 @@
 
 variable config  { type = any }
 variable project { type = any }
+variable netbox  { type = any }
