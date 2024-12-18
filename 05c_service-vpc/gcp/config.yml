@@ -1,0 +1,121 @@
+---
+
+# -----------------------------------------------------------------------------
+# File        : ctlabs-terraform/05c-service-prj/config.yml
+# Description : main configuration to provision a service project
+# -----------------------------------------------------------------------------
+
+# The project gets imported from the file ctlabs-terraform/gcp.conf.yml 
+# which has the following format:
+# 
+#project:
+#  name         : 02-CtLabs Cloud Functions LAB
+#  id           : <GCP_PROJECT_ID>
+#  oid          : <GCP_ORGANIZATION_ID>
+#  user         : <GCP_USER>
+#  billing      : <GCP_BILLING_ACCOUNT_ID>
+#  vpc_type     : regular # shared, service
+#  shared_vpc   : <GCP_PROJECT_ID> of host project (only used when vpc_type == service)
+#  sa_delete    : true
+#  region       : <gcp_region>
+#  zone         : <gcp_zone>
+#  labels       :
+#    ctlabs : secrets_lab
+#
+
+# -----------------------------------------------------------------------------
+#
+# YAML DEFAULTS
+#
+defaults:
+  labels: &default_labels
+    ctlabs_created : true
+    owner          : ctlabs_admin
+  spot: &default_spot
+    action  : STOP
+    lifespan: 8 # in hours
+  disks: &default_disks
+    boot:
+  network:
+    net1-lan1: &net1_lan1 regions/us-east1/subnetworks/net1-lan1
+    net2-lan1: &net2_lan1 regions/us-east1/subnetworks/net2-lan1
+# -----------------------------------------------------------------------------
+
+#services:
+#  - bigquery.googleapis.com
+#  - bigquerystorage.googleapis.com
+#  - cloudbilling.googleapis.com
+#  - iam.googleapis.com
+#  - cloudresourcemanager.googleapis.com
+#  - secretmanager.googleapis.com
+#  - storage-component.googleapis.com
+
+#service_accounts:
+#  - id  : vault-service-account
+#    name: VaulServiceAccount
+
+#iam_roles:
+#  - id    : VaultServiceRole
+#    title : VaultServiceRole
+#    perms : 
+#      - iam.serviceAccounts.get
+#      - iam.serviceAccountKeys.get
+#      - iam.serviceAccounts.signJwt
+#      - compute.instances.get
+#      - compute.instanceGroups.list
+
+#iam_bindings:
+#  - role: VaultServiceRole
+#    type: project
+#    members:
+#      - "serviceAccount:vault-service-account"
+
+#buckets:
+#  - name     : tf-state
+#    location : us-east1
+#    destroy  : true
+#    labels   : *default_labels
+
+vms:
+  - name     : vm-1
+    domain   : ctlabs.internal
+    type     : e2-micro
+    image    : centos-stream-9-v20240213
+    #image   : debian-11-bullseye-v20240213
+    net      : *net1_lan1
+    #script   : ./ppvm.sh
+    spot     : *default_spot
+    nat      : true
+    disks    : 
+      <<: *default_disks
+      vg-data:
+    labels   :
+      <<    : *default_labels
+      ctlabs: service_account_given
+
+#  - name     : vm-2
+#    domain   : ctlabs.internal
+#    type     : e2-micro
+#    #image    : centos-stream-9-v20240213
+#    image    : debian-11-bullseye-v20240213
+#    net      : *net1_lan1
+#    nat      : true
+#    oslogin  : false
+#    spot     : *default_spot
+#    disks    : *default_disks
+#    labels   :
+#      <<    : *default_labels
+#      ctlabs: no_service_account
+#
+#  - name     : vm-3
+#    domain   : ctlabs.internal
+#    type     : e2-micro
+#    #image    : centos-stream-9-v20240213
+#    image    : debian-12-bookworm-v20240910
+#    net      : *net2_lan1
+#    nat      : true
+#    spot     : *default_spot
+#    disks    : *default_disks
+#    labels   :
+#      <<    : *default_labels
+#      ctlabs: no_service_account
