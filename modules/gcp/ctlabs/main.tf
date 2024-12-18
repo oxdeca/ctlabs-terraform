@@ -21,6 +21,12 @@ provider "google-beta" {
   zone    = try( var.project.zone )
 }
 
+provider "netbox" {
+  server_url           = try( var.netbox.url )
+  api_token            = try( var.netbox.token )
+  allow_insecure_https = true
+}
+
 module "project" {
   source  = "../project"
 
@@ -162,6 +168,7 @@ module "vm" {
 
   project = try( var.project, [] )
   vms     = try( var.config.vms, [] )
+  netbox  = try( var.netbox, [] )
 
   depends_on = [module.net, module.subnet, module.dns]
 }

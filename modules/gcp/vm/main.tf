@@ -25,6 +25,7 @@ locals {
     "update"     = true,
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
+    "metadata"   = {},
   }
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
@@ -116,6 +117,15 @@ resource "google_compute_instance" "vm" {
   metadata = {
     enable-oslogin = try( each.value.oslogin, local.defaults.oslogin )
     startup-script = try( file("${each.value.script}"), "" )
+
+    dynamic "items" {
+      for_each = try( each.value.metadata, local.defaults.metadata )
+
+      content {
+        key   = items.key
+        value = items.value
+      }
+    }
   }
 
   dynamic service_account {
@@ -156,6 +166,11 @@ resource "google_dns_record_set" "rr" {
   depends_on = [google_compute_instance.vm]
 }
 
+#
+# atm, this works only for /24 prefix, and is too complicated
+# i.e. ip = a.b.c.d 
+# reverse zone = c.b.a.in-addr.arpa
+#
 resource "google_dns_record_set" "ptr" {
   for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
 

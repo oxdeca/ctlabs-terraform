@@ -5,3 +5,4 @@
 
 variable vms     { type = any }
 variable project { type = any }
+variable netbox  { type = any }
