@@ -25,7 +25,10 @@ locals {
     "update"     = true,
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
-    "metadata"   = {},
+    "metadata"   = {
+      enable-oslogin = local.defaults.oslogin
+      startup-script = ""
+    }
   }
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
@@ -114,17 +117,11 @@ resource "google_compute_instance" "vm" {
     enable_nested_virtualization = try( each.value.nested, local.defaults.nested )
   }
 
-  metadata = {
-    enable-oslogin = try( each.value.oslogin, local.defaults.oslogin )
-    startup-script = try( file("${each.value.script}"), "" )
-
-    dynamic items = {
-      for_each = try( each.value.metadata, local.defaults.metadata )
-
-      content {
-        key   = items.key
-        value = items.value
-      }
+  dynamic metadata {
+    for_each = try( merge(local.defaults.metadata, each.value.metadata), local.defaults.metadata )
+    content {
+      key   = items.key
+      value = items.value
     }
   }
 
