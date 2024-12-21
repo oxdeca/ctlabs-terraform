@@ -189,7 +189,7 @@ resource "google_dns_record_set" "ptr" {
   for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
 
   managed_zone = element(reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), 0)
-  name         = join(".", reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), ["in-addr.arpa"])
+  name         = join(".", reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), ["in-addr.arpa."])
   project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
   type         = "PTR"
   ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
