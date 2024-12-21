@@ -188,8 +188,8 @@ resource "google_dns_record_set" "ptr" {
   for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
 
   #managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
-  #managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:2]))
-  managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:ceil( tonumber( split("/", google_compute_instance.vm[each.key].network_interface.0.network_ip)[1] ) / 8 ) ] ) )
+  #managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:ceil( tonumber( split("/", google_compute_instance.vm[each.key].network_interface.0.network_ip)[1] ) / 8 ) ] ) )
+  managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:3]))
   name         = join(".", reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), ["in-addr.arpa."])
   project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
   type         = "PTR"
