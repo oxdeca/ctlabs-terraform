@@ -29,12 +29,6 @@ locals {
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
 
-# helper functions
-locals {
-  hrs2secs(hrs)            = hrs * 3600,
-  cidr_suffix_length(cidr) = ceil( tonumber(split("/", cidr)[1])) / 8 ),
-}
-
 resource "google_service_account" "sa" {
   for_each = { for vm in var.vms : vm.name => vm }
 
