@@ -11,7 +11,7 @@ locals {
       "mode" = "READ_WRITE",
     },
     "spot" = { 
-      "lifespan" = 2,        # hrs 
+      "lifespan" = 4,# in hours
       "action"   = "STOP" 
     },
     "dns" = {
@@ -144,7 +144,7 @@ resource "google_compute_instance" "vm" {
       instance_termination_action = try( each.value.spot.action, local.defaults.spot.action )
 
       max_run_duration {
-        seconds = try( local.hrs2secs(each.value.spot.lifespan), local.hrs2secs(local.defaults.spot.lifespan) )
+        seconds = try( each.value.spot.lifespan * 3600, local.defaults.spot.lifespan * 3600 )
       }
     }
   }
@@ -195,7 +195,7 @@ resource "google_dns_record_set" "ptr" {
 
   #managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
   #managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:2]))
-  managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:local.cidr_suffix_length(google_compute_subnetwork.subnet.ip_cidr_range)]))
+  managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:ceil( tonumber(split(",", google_compute_subnetwork.subnet.ip_cidr_range)) / 8 )]))
   name         = join(".", reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), ["in-addr.arpa."])
   project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
   type         = "PTR"
