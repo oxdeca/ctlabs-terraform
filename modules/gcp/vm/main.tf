@@ -33,7 +33,7 @@ locals {
 locals {
   helper = {
     hrs2secs(hrs)            = hrs * 3600
-    cidr_suffix_length(cidr) = length(split("/"), cidr)[1])
+    cidr_suffix_length(cidr) = ceil( tonumber(split("/", cidr)[1])) / 8 )
   }
 }
 
