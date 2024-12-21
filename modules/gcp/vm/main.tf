@@ -11,7 +11,7 @@ locals {
       "mode" = "READ_WRITE",
     },
     "spot" = { 
-      "lifespan" = 2, 
+      "lifespan" = 2,        # hrs 
       "action"   = "STOP" 
     },
     "dns" = {
@@ -25,12 +25,16 @@ locals {
     "update"     = true,
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
-    "metadata"   = {
-      enable-oslogin = false
-      startup-script = ""
-    }
   }
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
+}
+
+# helper functions
+locals {
+  helper = {
+    hrs2secs(hrs)            = hrs * 3600
+    cidr_suffix_length(cidr) = length(split("/"), cidr)[1])
+  }
 }
 
 resource "google_service_account" "sa" {
@@ -117,10 +121,13 @@ resource "google_compute_instance" "vm" {
     enable_nested_virtualization = try( each.value.nested, local.defaults.nested )
   }
 
-  metadata = merge({
-      enable-oslogin = try( each.value.oslogin, local.defaults.oslogin )
-      startup-script = try( file("${each.value.script}"), "" )
-    }, try( each.value.metadata, {} ) )
+  metadata = merge(
+     {
+       enable-oslogin = try( each.value.oslogin, local.defaults.oslogin )
+       startup-script = try( file("${each.value.script}"), "" )
+     }, 
+     try( each.value.metadata, {} ) 
+  )
 
   dynamic service_account {
     for_each = try(each.value.name, null) != null ? toset([1]) : toset([])
@@ -139,7 +146,7 @@ resource "google_compute_instance" "vm" {
       instance_termination_action = try( each.value.spot.action, local.defaults.spot.action )
 
       max_run_duration {
-        seconds = try( each.value.spot.lifespan * 3600, local.defaults.spot.lifespan * 3600, 14400 )
+        seconds = try( local.helper.hrs2secs(each.value.spot.lifespan), local.helper.hrs2secs(local.defaults.spot.lifespan) )
       }
     }
   }
@@ -188,7 +195,9 @@ resource "google_dns_record_set" "rr" {
 resource "google_dns_record_set" "ptr" {
   for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
 
-  managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
+  #managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
+  #managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:2]))
+  managed_zone = join("-", concat(["reverse"], reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip))[0:local.helper.cidr_suffix_length(google_compute_subnetwork.subnet.ip_cidr_range)]))
   name         = join(".", reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), ["in-addr.arpa."])
   project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
   type         = "PTR"
