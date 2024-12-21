@@ -32,8 +32,8 @@ locals {
 # helper functions
 locals {
   helper = {
-    hrs2secs(hrs)            = hrs * 3600
-    cidr_suffix_length(cidr) = ceil( tonumber(split("/", cidr)[1])) / 8 )
+    hrs2secs(hrs)            = hrs * 3600,
+    cidr_suffix_length(cidr) = ceil( tonumber(split("/", cidr)[1])) / 8 ),
   }
 }
 
