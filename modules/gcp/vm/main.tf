@@ -12,7 +12,7 @@ locals {
     },
     "spot" = { 
       "lifespan" = 2, 
-      "action"   = "DELETE" 
+      "action"   = "STOP" 
     },
     "dns" = {
       "ttl" = 600,
@@ -165,21 +165,35 @@ resource "google_dns_record_set" "rr" {
 # i.e. ip = a.b.c.d 
 # reverse zone = c.b.a.in-addr.arpa
 #
-resource "google_dns_record_set" "ptr" {
-  for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
-
-  managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
-  name         = join("", concat( slice( reverse( split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip) ), 0, 1 ), concat( ["."], [join( ".", concat( reverse( slice( split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3 ) ), ["in-addr.arpa."] ) )] ) ) )
-  project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
-  type         = "PTR"
-  ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
-  rrdatas      = ["${each.value.name}.${each.value.domain}."]
-
-  depends_on = [google_compute_instance.vm]
-}
+#resource "google_dns_record_set" "ptr" {
+#  for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
+#
+#  managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
+#  name         = join("", concat( slice( reverse( split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip) ), 0, 1 ), concat( ["."], [join( ".", concat( reverse( slice( split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3 ) ), ["in-addr.arpa."] ) )] ) ) )
+#  project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
+#  type         = "PTR"
+#  ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
+#  rrdatas      = ["${each.value.name}.${each.value.domain}."]
+#
+#  depends_on = [google_compute_instance.vm]
+#}
 
 #resource "null_resource" "cost_estimation1" {
 #  provisioner "local-exec" {
 #    command = "echo 'For Cost Estimation check: https://cloudbilling.googleapis.com/v2beta/services'"
 #  }
 #}
+
+
+resource "google_dns_record_set" "ptr" {
+  for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
+
+  managed_zone = element(reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), 0)
+  name         = join(".", reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), "in-addr.arpa")
+  project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
+  type         = "PTR"
+  ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
+  rrdatas      = ["${each.value.name}.${each.value.domain}."]
+  
+  depends_on = [google_compute_instance.vm]
+}
