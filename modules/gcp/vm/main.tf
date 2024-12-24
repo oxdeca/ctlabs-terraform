@@ -6,9 +6,10 @@
 locals {
   defaults = {
     "disk" = { 
-      "type" = "pd-standard", 
-      "size" = "10" 
-      "mode" = "READ_WRITE",
+      "type"      = "pd-standard", 
+      "size"      = "10" 
+      "mode"      = "READ_WRITE",
+      "protected" = true,
     },
     "spot" = { 
       "lifespan" = 4,# in hours
@@ -37,9 +38,21 @@ resource "google_service_account" "sa" {
   description  = try( each.value.desc, null )
 }
 
+resource "google_compute_disk" "attached_protected" {
+  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith( disk.disk_id, "boot" ) && disk.protected } 
 
-resource "google_compute_disk" "attached" {
-  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if ! startswith( disk.disk_id, "boot" ) } 
+  name     = "${each.value.vm_id}-${each.value.disk_id}"
+  type     = try( each.value.type, local.defaults.disk["type"] )
+  size     = try( each.value.size, local.defaults.disk["size"] )
+  labels   = try( each.value.labels, {} )
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "google_compute_disk" "attached_unprotected" {
+  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith( disk.disk_id, "boot" ) && !disk.protected } 
   name     = "${each.value.vm_id}-${each.value.disk_id}"
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
@@ -143,7 +156,7 @@ resource "google_compute_instance" "vm" {
     }
   }
 
-  depends_on = [google_compute_disk.attached]
+  depends_on = [google_compute_disk.attached_protected, google_compute_disk.attached_unprotected]
 }
 
 resource "google_dns_record_set" "rr" {
