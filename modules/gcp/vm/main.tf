@@ -9,7 +9,6 @@ locals {
       "type"      = "pd-standard", 
       "size"      = "10" 
       "mode"      = "READ_WRITE",
-      "protected" = true,
     },
     "spot" = { 
       "lifespan" = 4,# in hours
@@ -27,7 +26,7 @@ locals {
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
-  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, protected = try( dv.protected, local.defaults.disk.protected ) }, dv ) ] ] )
+  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
 }
 
 resource "google_service_account" "sa" {
@@ -39,7 +38,7 @@ resource "google_service_account" "sa" {
 }
 
 resource "google_compute_disk" "attached" {
-  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith( disk.disk_id, "boot" ) && !disk.protected } 
+  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith( disk.disk_id, "boot" ) } 
   name     = "${each.value.vm_id}-${each.value.disk_id}"
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
@@ -58,8 +57,7 @@ resource "google_compute_disk" "attached" {
   # 5. remove the old disk from the terraform configuration
   # 6. run terraform to update its state
   lifecycle {
-    create_before_destroy = true
-    #prevent_destroy = false
+    prevent_destroy = true
   }
 }
 
