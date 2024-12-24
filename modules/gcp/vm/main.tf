@@ -38,7 +38,7 @@ resource "google_service_account" "sa" {
   description  = try( each.value.desc, null )
 }
 
-resource "google_compute_disk" "attached_unprotected" {
+resource "google_compute_disk" "attached" {
   for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith( disk.disk_id, "boot" ) && !disk.protected } 
   name     = "${each.value.vm_id}-${each.value.disk_id}"
   type     = try( each.value.type, local.defaults.disk["type"] )
@@ -144,7 +144,7 @@ resource "google_compute_instance" "vm" {
     }
   }
 
-  depends_on = [google_compute_disk.attached_protected, google_compute_disk.attached_unprotected]
+  depends_on = [google_compute_disk.attached]
 }
 
 resource "google_dns_record_set" "rr" {
