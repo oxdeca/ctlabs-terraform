@@ -38,19 +38,6 @@ resource "google_service_account" "sa" {
   description  = try( each.value.desc, null )
 }
 
-resource "google_compute_disk" "attached_protected" {
-  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith( disk.disk_id, "boot" ) && disk.protected } 
-
-  name     = "${each.value.vm_id}-${each.value.disk_id}"
-  type     = try( each.value.type, local.defaults.disk["type"] )
-  size     = try( each.value.size, local.defaults.disk["size"] )
-  labels   = try( each.value.labels, {} )
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 resource "google_compute_disk" "attached_unprotected" {
   for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith( disk.disk_id, "boot" ) && !disk.protected } 
   name     = "${each.value.vm_id}-${each.value.disk_id}"
@@ -71,7 +58,8 @@ resource "google_compute_disk" "attached_unprotected" {
   # 5. remove the old disk from the terraform configuration
   # 6. run terraform to update its state
   lifecycle {
-    prevent_destroy = false
+    create_before_destroy = true
+    #prevent_destroy = false
   }
 }
 
