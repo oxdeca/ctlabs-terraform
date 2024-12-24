@@ -27,7 +27,7 @@ locals {
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
-  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
+  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, protected = try( dv.protected, local.defaults.disk.protected ) }, dv ) ] ] )
 }
 
 resource "google_service_account" "sa" {
