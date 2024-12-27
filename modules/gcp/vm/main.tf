@@ -6,11 +6,12 @@
 locals {
   defaults = {
     "disk" = { 
-      "fstype"    = "xfs",
-      "opts"      = "defaults",
-      "type"      = "pd-standard", 
+      "fstype"    = "xfs"
+      "opts"      = "defaults"
+      "path"      = "/mnt"
+      "type"      = "pd-standard" 
       "size"      = "10" 
-      "mode"      = "READ_WRITE",
+      "mode"      = "READ_WRITE"
     },
     "spot" = { 
       "lifespan" = 4,# in hours
@@ -115,14 +116,21 @@ resource "google_compute_instance" "vm" {
   }
 
   metadata = merge(
-     {
-       enable-oslogin    = try( each.value.oslogin, local.defaults.oslogin )
-       startup-script    = try( file("${each.value.script}"), "" )
-       #ctlabs_base_disks = try( jsonencode([ for dk,dv in each.value.disks: dv if !startswith(dk, "boot") && dv.path != "" ]), null )
-       ctlabs_base_disks = try( jsonencode([ for dk,dv in each.value.disks: { name = try(dv.name, "${each.value.name}-${dk}"), fstype = try(dv.fstype, local.defaults.disk.fstype), opts = try(dv.opts, local.defaults.disk.opts), path = try(dv.path, null), dv = dv } if !startswith(dk, "boot") && dv.path != null ]), null )
-       #ctlabs_base_disks = try( jsonencode(each.value.disks), null )
-     }, 
-     try( each.value.metadata, {} ) 
+    {
+      enable-oslogin    = try( each.value.oslogin, local.defaults.oslogin )
+      startup-script    = try( file("${each.value.script}"), "" )
+      ctlabs_base_disks = try( jsonencode(
+        [ for dk,dv in each.value.disks: 
+          { 
+            name   = try(dv.name,   "${each.value.name}-${dk}"), 
+            fstype = try(dv.fstype, local.defaults.disk.fstype), 
+            opts   = try(dv.opts,   local.defaults.disk.opts), 
+            path   = try(dv.path,   local.defaults.disk.path) 
+          } if dv.path != ""   # !startswith(dk, "boot") 
+        ]
+      ), null )
+    }, 
+    try( each.value.metadata, {} ) 
   )
 
   dynamic service_account {
