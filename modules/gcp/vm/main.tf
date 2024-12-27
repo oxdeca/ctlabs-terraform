@@ -118,7 +118,7 @@ resource "google_compute_instance" "vm" {
      {
        enable-oslogin    = try( each.value.oslogin, local.defaults.oslogin )
        startup-script    = try( file("${each.value.script}"), "" )
-       ctlabs_base_disks = try( [ for dk,dv in each.value.disks: dv if !startswith(dk, "boot") && dv.path != "" ], null )
+       ctlabs_base_disks = try( jsonencode([ for dk,dv in each.value.disks: dv if !startswith(dk, "boot") && dv.path != "" ]), null )
      }, 
      try( each.value.metadata, {} ) 
   )
