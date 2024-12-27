@@ -119,17 +119,16 @@ resource "google_compute_instance" "vm" {
     {
       enable-oslogin    = try( each.value.oslogin, local.defaults.oslogin )
       startup-script    = try( file("${each.value.script}"), "" )
-      ctlabs_base_disks = try( jsonencode(
-        [ for dk,dv in each.value.disks: 
-          { 
-            name   = try(dv.name,   "${each.value.name}-${dk}"), 
-            fstype = try(dv.fstype, local.defaults.disk.fstype), 
-            opts   = try(dv.opts,   local.defaults.disk.opts), 
+      ctlabs_base_disks =  jsonencode(try(
+        [ for dk,dv in each.value.disks :
+          {
+            name   = try(dv.name,   "${each.value.name}-${dk}"),
+            fstype = try(dv.fstype, local.defaults.disk.fstype),
+            opts   = try(dv.opts,   local.defaults.disk.opts),
             path   = try(dv.path,   local.defaults.disk.path),
-            disks  = each.value.disks 
-          } if dv["path"] != "" && !startswith(dk, "boot") 
+          } if !startswith(dk, "boot") && { for k,v in dv : k => v if k == "path" && v != null } != {}
         ]
-      ), null )
+      , null) )
     }, 
     try( each.value.metadata, {} ) 
   )
