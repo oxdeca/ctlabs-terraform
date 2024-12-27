@@ -28,7 +28,7 @@ locals {
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
-  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk }, dv ) ] ] )
+  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, name = "${vm.name}-${dk}" }, dv ) ] ] )
 }
 
 resource "google_service_account" "sa" {
@@ -118,7 +118,8 @@ resource "google_compute_instance" "vm" {
      {
        enable-oslogin    = try( each.value.oslogin, local.defaults.oslogin )
        startup-script    = try( file("${each.value.script}"), "" )
-       ctlabs_base_disks = try( jsonencode([ for dk,dv in each.value.disks: dv if !startswith(dk, "boot") && dv.path != "" ]), null )
+       #ctlabs_base_disks = try( jsonencode([ for dk,dv in each.value.disks: dv if !startswith(dk, "boot") && dv.path != "" ]), null )
+       ctlabs_base_disks = try( jsonencode(each.value.disks), null )
      }, 
      try( each.value.metadata, {} ) 
   )
