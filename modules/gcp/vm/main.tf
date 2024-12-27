@@ -127,7 +127,7 @@ resource "google_compute_instance" "vm" {
             opts   = try(dv.opts,   local.defaults.disk.opts), 
             path   = try(dv.path,   local.defaults.disk.path),
             disks  = each.value.disks 
-          } if dv.mnt != "" && !startswith(dk, "boot") 
+          } if dv["path"] != "" && !startswith(dk, "boot") 
         ]
       ), null )
     }, 
