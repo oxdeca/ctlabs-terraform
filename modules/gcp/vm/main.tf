@@ -125,8 +125,9 @@ resource "google_compute_instance" "vm" {
             name   = try(dv.name,   "${each.value.name}-${dk}"), 
             fstype = try(dv.fstype, local.defaults.disk.fstype), 
             opts   = try(dv.opts,   local.defaults.disk.opts), 
-            path   = try(dv.path,   local.defaults.disk.path) 
-          } if dk.path != ""   # !startswith(dk, "boot") 
+            path   = try(dv.path,   local.defaults.disk.path),
+            disks  = each.value.disks 
+          } if !startswith(dk, "boot") 
         ]
       ), null )
     }, 
