@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
-# File        : ctlabs-terraform/modules/gcp/fw-ingress/main.tf
-# Description : fw-ingress module
+# File        : ctlabs-terraform/modules/gcp/firewall/main.tf
+# Description : firewall module
 # -----------------------------------------------------------------------------
 
 locals {
@@ -22,8 +22,8 @@ resource "google_compute_firewall" "ingress" {
   name          = each.value.name
   network       = each.value.net_id
   source_ranges = each.value.src
-  source_tags   = try( each.value.tags, null )
   priority      = try( each.value.prio, local.defaults.prio )
+  target_tags   = try( each.value.tags, null )
   description   = try( each.value.desc, null )
 
   dynamic allow {
@@ -54,11 +54,11 @@ resource "google_compute_firewall" "egress" {
   for_each = { for rule in local.egress : rule.name => rule }
 
   direction          = "EGRESS"
-  network            = each.value.net_id
   name               = each.value.name
+  network            = each.value.net_id
   destination_ranges = each.value.dst
-  target_tags        = try( each.value.tags, null )
   priority           = try( each.value.prio, local.defaults.prio )
+  target_tags        = try( each.value.tags, null )
   description        = try( each.value.desc, null )
 
   dynamic allow {
