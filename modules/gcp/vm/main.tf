@@ -60,7 +60,7 @@ resource "google_compute_disk" "attached" {
   # 5. remove the old disk from the terraform configuration
   # 6. run terraform to update its state
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
