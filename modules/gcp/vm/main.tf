@@ -143,7 +143,7 @@ resource "google_compute_instance" "vm" {
   } 
 
   lifecycle {
-    ignore_changes = [metadata_startup_script]
+    ignore_changes = [metadata_startup_script,attached_disk]
   }
 
   network_interface {
