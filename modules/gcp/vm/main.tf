@@ -24,6 +24,7 @@ locals {
     "oslogin"    = false,
     "nat"        = false,
     "nested"     = false,
+    "vtpm"       = true
     "protected"  = false,
     "update"     = true,
     "sa_prefix"  = "gce-",
@@ -63,6 +64,51 @@ resource "google_compute_disk" "attached" {
     prevent_destroy = false
   }
 }
+
+# --------------------------------
+# Ansible Token
+# --------------------------------
+
+#provider "vault" {
+#  address = try( var.vault.addr, "" )
+#  token   = try( var.vault.token, "" )
+#}
+#
+#resource "vault_policy" "sssd" {
+#  name   = "vp_sssd"
+#  policy = <<EOT
+#path "kv/data/sssd" {
+#  capabilities = ["read"]
+#}
+#EOT
+#}
+#
+#resource "vault_token_auth_backend_role" "gcepp" {
+#  role_name           = "vr_vm"
+#  allowed_policies    = ["vp_sssd"]
+#  disallowed_policies = ["default"]
+#  token_ttl           = 600
+#  token_type          = "service"
+#}
+#
+#resource "vault_token" "ansible" {
+#  #count = var.create_token ? 1 : 0
+#
+#  role_name = "vr_vm"
+#  policies  = ["vp_sssd"]
+#  renewable = false
+#  num_uses  = 1
+#  ttl       = "10m"
+#
+#  metadata = {
+#    "purpose" = "ansible"
+#  }
+#}
+
+
+# ---
+# VM
+# ---
 
 resource "google_compute_instance" "vm" {
   provider = google-beta
@@ -115,10 +161,15 @@ resource "google_compute_instance" "vm" {
     enable_nested_virtualization = try( each.value.nested, local.defaults.nested )
   }
 
+  shielded_instance_config {
+    enable_vtpm = try( each.value.vtpm, local.defaults.vtpm )
+  }
+
   metadata = merge(
     {
       enable-oslogin    = try( each.value.oslogin, local.defaults.oslogin )
       startup-script    = try( file("${each.value.script}"), "" )
+      #ansible_token     = try( vault_token.ansible.client_token, "" )
       ctlabs_base_disks =  jsonencode( try(
         [ for dk,dv in each.value.disks :
           {
