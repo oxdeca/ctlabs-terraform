@@ -42,7 +42,7 @@ resource "google_service_account" "sa" {
 }
 
 resource "google_compute_disk" "attached" {
-  for_each = { for disk in local.disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith( disk.disk_id, "boot" ) } 
+  for_each = { for disk in local.disks : disk.name => disk if !startswith( disk.disk_id, "boot" ) && !startswith( disk.disk_id, "extern:" ) } 
   name     = "${each.value.vm_id}-${each.value.disk_id}"
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
@@ -134,7 +134,7 @@ resource "google_compute_instance" "vm" {
   }
 
   dynamic attached_disk {
-    for_each = { for dk,dv in each.value.disks: "${each.value.name}-${dk}" => dv if ! startswith( dk, "boot" ) }
+    for_each = { for dk,dv in each.value.disks: startswith(dk, "extern:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => dv if ! startswith( dk, "boot" ) }
     content {
       device_name = "${attached_disk.key}"
       source      = "${attached_disk.key}"
