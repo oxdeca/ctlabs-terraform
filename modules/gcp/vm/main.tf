@@ -136,8 +136,8 @@ resource "google_compute_instance" "vm" {
   dynamic attached_disk {
     for_each = { for dk,dv in each.value.disks: startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => dv if !startswith( dk, "boot" ) }
     content {
-      device_name = startswith(each.key "disk:") ? split(":", each.key)[1] : each.key
-      source      = startswith(each.key "disk:") ? split(":", each.key)[1] : each.key
+      device_name = startswith(each.key, "disk:") ? split(":", each.key)[1] : each.key
+      source      = startswith(each.key, "disk:") ? split(":", each.key)[1] : each.key
       mode        = try( attached_disk.value.mode, local.defaults.disk.mode )
     }
   } 
