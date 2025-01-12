@@ -43,7 +43,7 @@ resource "google_service_account" "sa" {
 
 resource "google_compute_disk" "attached" {
   for_each = { for disk in local.disks : startswith(disk.disk_id, "detach:") ? "${disk.vm_id}-${split(":", disk.disk_id)[1]}" : disk.name => disk if !startswith( disk.disk_id, "boot" ) && !startswith( disk.disk_id, "extern:" ) } 
-  name     = "${each.value.vm_id}-${each.value.disk_id}"
+  name     = each.key
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
   labels   = try( each.value.labels, {} )
