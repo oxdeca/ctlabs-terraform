@@ -174,7 +174,7 @@ resource "google_compute_instance" "vm" {
       ctlabs_base_disks =  jsonencode( try(
         [ for dk,dv in each.value.disks :
           {
-            name   = startswith(dk, "disk:") ? split(":", dk)[1] : dk
+            name   = startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}"
             fstype = try(dv.fstype, local.defaults.disk.fstype),
             opts   = try(dv.opts,   local.defaults.disk.opts),
             path   = try(dv.path,   local.defaults.disk.path),
