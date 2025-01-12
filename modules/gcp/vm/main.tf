@@ -135,7 +135,7 @@ resource "google_compute_instance" "vm" {
   }
 
   dynamic attached_disk {
-    for_each = { for dk,dv in each.value.disks: startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => merge( { detached = try(dv.detached, local.defaults.disk.detached ) }, dv ) if !startswith( dk, "boot" ) && !dv.detached }
+    for_each = { for dk,dv in each.value.disks: startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => dv if !startswith( dk, "boot" ) && ! try(dv.detached, local.defaults.disk.detached) }
     content {
       device_name = attached_disk.key
       source      = attached_disk.key
