@@ -6,12 +6,13 @@
 locals {
   defaults = {
     "disk" = { 
-      "fstype" = "xfs"
-      "opts"   = "defaults"
-      "path"   = "/mnt"
-      "type"   = "pd-standard" 
-      "size"   = "10" 
-      "mode"   = "READ_WRITE"
+      "fstype"   = "xfs"
+      "opts"     = "defaults"
+      "path"     = "/mnt"
+      "type"     = "pd-standard" 
+      "size"     = "10" 
+      "mode"     = "READ_WRITE"
+      "detached" = false
     },
     "spot" = { 
       "lifespan" = 4,# in hours
@@ -30,7 +31,7 @@ locals {
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
-  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, name = startswith(dk, "disk:") ? split(":", dk)[1] : "${vm.name}-${dk}" }, dv ) ] ] )
+  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, name = startswith(dk, "disk:") ? split(":", dk)[1] : "${vm.name}-${dk}", detached = try(dv.detached, local.defaults.disk.detached ) }, dv ) ] ] )
 }
 
 resource "google_service_account" "sa" {
@@ -134,7 +135,7 @@ resource "google_compute_instance" "vm" {
   }
 
   dynamic attached_disk {
-    for_each = { for dk,dv in each.value.disks: startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => dv if !startswith( dk, "boot" ) }
+    for_each = { for dk,dv in each.value.disks: startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => merge( detached = try(dv.detached, local.defaults.disk.detached ) }, dv ) if !startswith( dk, "boot" ) && !dv.detached }
     content {
       device_name = attached_disk.key
       source      = attached_disk.key
