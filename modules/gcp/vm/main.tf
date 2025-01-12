@@ -6,12 +6,12 @@
 locals {
   defaults = {
     "disk" = { 
-      "fstype"    = "xfs"
-      "opts"      = "defaults"
-      "path"      = "/mnt"
-      "type"      = "pd-standard" 
-      "size"      = "10" 
-      "mode"      = "READ_WRITE"
+      "fstype" = "xfs"
+      "opts"   = "defaults"
+      "path"   = "/mnt"
+      "type"   = "pd-standard" 
+      "size"   = "10" 
+      "mode"   = "READ_WRITE"
     },
     "spot" = { 
       "lifespan" = 4,# in hours
@@ -30,7 +30,7 @@ locals {
     "sa_prefix"  = "gce-",
     "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
   }
-  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, name = "${vm.name}-${dk}" }, dv ) ] ] )
+  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, name = startswith(dk, "disk:") ? split(":", dk)[1] : "${vm.name}-${dk}" }, dv ) ] ] )
 }
 
 resource "google_service_account" "sa" {
@@ -42,7 +42,7 @@ resource "google_service_account" "sa" {
 }
 
 resource "google_compute_disk" "attached" {
-  for_each = { for disk in local.disks : startswith(disk.disk_id, "detach:") ? "${disk.vm_id}-${split(":", disk.disk_id)[1]}" : disk.name => disk if !startswith( disk.disk_id, "boot" ) && !startswith( disk.disk_id, "extern:" ) } 
+  for_each = { for disk in local.disks : disk.name => disk if !startswith( disk.disk_id, "boot" ) } 
   name     = each.key
   type     = try( each.value.type, local.defaults.disk["type"] )
   size     = try( each.value.size, local.defaults.disk["size"] )
@@ -134,7 +134,7 @@ resource "google_compute_instance" "vm" {
   }
 
   dynamic attached_disk {
-    for_each = { for dk,dv in each.value.disks: startswith(dk, "extern:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => dv if !startswith( dk, "boot" ) && !startswith(dk, "detach:" ) }
+    for_each = { for dk,dv in each.value.disks: startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => dv if !startswith( dk, "boot" ) }
     content {
       device_name = "${attached_disk.key}"
       source      = "${attached_disk.key}"
@@ -177,7 +177,7 @@ resource "google_compute_instance" "vm" {
             fstype = try(dv.fstype, local.defaults.disk.fstype),
             opts   = try(dv.opts,   local.defaults.disk.opts),
             path   = try(dv.path,   local.defaults.disk.path),
-          } if !startswith(dk, "boot") && !startswith(dk, "detach")  # && [ for k,v in dv : v if k == "path" && v != null ] != []
+          } if !startswith(dk, "boot") # && [ for k,v in dv : v if k == "path" && v != null ] != []
         ]
       , null) )
     }, 
