@@ -206,8 +206,8 @@ module "buckets" {
 module "functions" {
   source = "../functions"
 
-  project   = try( var.project, null )
-  functions = try( var.config.functions, null )
+  project   = try( var.project, [] )
+  functions = try( var.config.functions, [] )
 
   depends_on = [module.buckets, module.services]
 }
