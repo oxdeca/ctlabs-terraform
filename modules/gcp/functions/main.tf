@@ -11,7 +11,8 @@ locals {
     sa_postfix = "@${var.project.id}.iam.gserviceaccount.com",
     bindings = [
       { 
-        role    = "roles/storage.objectViewer",
+        #role    = "roles/storage.objectViewer",
+        role    = "",
         members = []
       }
     ]
