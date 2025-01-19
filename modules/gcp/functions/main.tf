@@ -7,10 +7,13 @@
 
 locals {
   defaults = {
-    "sa_prefix" = "crf-",
-    "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
-    "bindings" = [
-      "roles/storage.objectViewer"
+    sa_prefix  = "crf-",
+    sa_postfix = "@${var.project.id}.iam.gserviceaccount.com",
+    bindings = [
+      { 
+        role    = "roles/storage.objectViewer",
+        members = []
+      }
     ]
   }
 }
