@@ -5,8 +5,9 @@
 
 locals {
   defaults = {
-    "class"     = "STANDARD",
-    "access"    = "inherited",
+    "class"     = "STANDARD",   # STANDARD, MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, ARCHIVE, AUTO
+    "access"    = "uniform"
+    "public"    = false
     "retention" = false,
     "destroy"   = true,
     "labels"    = {
@@ -18,14 +19,22 @@ locals {
 resource "google_storage_bucket" "bucket" {
   for_each = { for bucket in var.buckets : bucket.name => bucket }
 
-  name                     = "${var.project.id}--${each.value.name}"
-  location                 = each.value.location
-  project                  = var.project.id
-  labels                   = merge( try(each.value.labels, {} ), local.defaults.labels )
-  force_destroy            = try( each.value.destroy,   local.defaults.destroy   )
-  storage_class            = try( each.value.class,     local.defaults.class     )
-  enable_object_retention  = try( each.value.retention, local.defaults.retention )
-  public_access_prevention = try( each.value.access,    local.defaults.access    )
+  name                        = "${var.project.id}--${each.key}"
+  location                    = try( each.value.location, local.defaults.location )
+  project                     = var.project.id
+  labels                      = merge( try(each.value.labels, {} ), local.defaults.labels )
+  force_destroy               = try( each.value.destroy,   local.defaults.destroy   )
+  storage_class               = try( each.value.class,     local.defaults.class     ) == "AUTO" ? null : try( each.value.class, local.defaults.class )
+  enable_object_retention     = try( each.value.retention, local.defaults.retention )
+  public_access_prevention    = try( each.value.public,    local.defaults.public    ) == false     ? true : false
+  uniform_bucket_level_access = try( each.value.access,    local.defalts.access     ) == "uniform" ? true : false
+
+  dynamic autoclass {
+    for_each = try( each.value.class, local.defaults.class ) == "AUTO" ? toset([1]) : toset([])
+    content {
+      enabled = true
+    }
+  }
 }
 
 #resource "google_storage_bucket_iam_binding" "iam" {
