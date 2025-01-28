@@ -4,7 +4,7 @@
 # -----------------------------------------------------------------------------
 
 variable project { type = any }
-variable buckets { type = any }
+variable buckets { type = any
 
 validate {
   condition     = all(map(values(var.buckets))[*].name != null)
@@ -19,4 +19,6 @@ validate {
 validate {
   condition     = all(map(values(var.buckets))[*].private in [ true, false ]
   error_message = "private if set to 'true' else public!"
+}
+
 }
