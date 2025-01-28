@@ -4,22 +4,17 @@
 # -----------------------------------------------------------------------------
 
 variable project { type = any }
-variable buckets { 
-  type = any
+variable buckets {
+  type        = any
+  description = "Configuration for GCP buckets."
 
   validation {
-    condition     = all(map(values(var.buckets))[*].name != null)
-    error_message = "Every bucket must have a name."
-  }
-  
-  validation {
-    condition     = all(map(values(var.buckets))[*].class in ["STANDARD", "MULTI_REGIONAL", "REGIONAL", "NEARLINE", "COLDLINE", "ARCHIVE", "AUTO", "AUTO_ARCHIVE", "AUTO_NEARLINE" ] )
-    error_message = "Invalid storage class specified"
-  }
-  
-  validation {
-    condition     = all(map(values(var.buckets))[*].private in [ true, false ]
-    error_message = "private if set to 'true' else public!"
+    condition     = all(map(keys(var.bucket_config))[*].name != null)
+    error_message = "Every bucket must have a 'name' field."
   }
 
+  validation {
+    condition     = all(map(keys(var.bucket_config))[*].class in ["STANDARD", "NEARLINE", "COLDLINE", "MULTI_REGIONAL", "REGIONAL", "ARCHIVE", "AUTO"])
+    error_message = "Invalid storage class specified."
+  }
 }
