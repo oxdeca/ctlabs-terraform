@@ -14,7 +14,7 @@ variable buckets {
   }
 
   validation {
-    condition     = all(map(keys(var.buckets))[*].class in toset(["STANDARD", "NEARLINE", "COLDLINE", "MULTI_REGIONAL", "REGIONAL", "ARCHIVE", "AUTO"])
+    condition     = all(map(keys(var.buckets))[*].class contains(["STANDARD", "NEARLINE", "COLDLINE", "MULTI_REGIONAL", "REGIONAL", "ARCHIVE", "AUTO"])
 
     error_message = "Invalid storage class specified."
   }
