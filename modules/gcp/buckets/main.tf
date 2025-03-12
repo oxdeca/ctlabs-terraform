@@ -16,7 +16,7 @@ locals {
       ctlabs_created = true
     }
   }
-  folders       = flatten( [ for bk, bv in var.buckets : [ for fk, fv in try( bv.folders, {} ) : merge( { folder_id = "${fk}/", bucket_id = "${var.project.id}-${bk}" }, fv ) ] ] )
+  folders       = flatten( [ for bk, bv in var.buckets : [ for fk, fv in try( bv.folders, {} ) : merge( { folder_id = "${var.project.id}-${bk}/${fk}/", bucket_id = "${var.project.id}-${bk}", folder_name = "${fk}/" }, fv ) ] ] )
   bucket_access = flatten( [ for bk, bv in var.buckets : [ for access in try( bv.access, [] )  : merge( { bucket_id = bk }, access ) ] ] )
   #folder_access = flatten( [ for bk])
 }
@@ -56,7 +56,7 @@ resource "google_storage_bucket" "bucket" {
 resource "google_storage_managed_folder" "folder" {
   for_each = { for folder in local.folders : folder.folder_id => folder }
 
-  name          = each.value.folder_id
+  name          = each.value.folder_name
   bucket        = each.value.bucket_id
   force_destroy = try(each.value.destroy, local.defaults.destroy)
 
@@ -75,4 +75,3 @@ resource "google_storage_bucket_iam_binding" "iam" {
 
   depends_on = [google_storage_bucket.bucket]
 }
-
