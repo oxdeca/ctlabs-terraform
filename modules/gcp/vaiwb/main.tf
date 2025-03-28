@@ -43,7 +43,7 @@ resource "google_project_service_identity" "notebooks_api" {
 }
 
 resource "google_project_iam_member" "notebook_api_sa" {
-  project = var.project.shared_vpc
+  project = try( var.project.shared_vpc, var.project.id )
   role    = "roles/compute.networkUser"
   member  = google_project_service_identity.notebooks_api.member
 }
