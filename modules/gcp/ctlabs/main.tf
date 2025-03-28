@@ -227,3 +227,17 @@ module "bigquery" {
   depends_on = [module.services]
 }
 
+# -------------------------------------------------------------------------------------------
+
+#
+# Vertex AI
+#
+
+module "vaiwb" {
+  source = "../vaiwb"
+
+  project = try( var.project, [] )
+  wbs     = try( var.config.wbs, [] )
+
+  depends_on = [module.services]
+}
