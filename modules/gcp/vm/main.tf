@@ -9,13 +9,13 @@ locals {
       "fstype"   = "xfs"
       "opts"     = "defaults"
       "path"     = "/mnt"
-      "type"     = "pd-standard" 
-      "size"     = "10" 
+      "type"     = "pd-ssd" 
+      "size"     = "20" 
       "mode"     = "READ_WRITE"
       "detached" = false
     },
     "spot" = { 
-      "lifespan" = 4,# in hours
+      "lifespan" = 8,# in hours
       "action"   = "STOP" 
     },
     "dns" = {

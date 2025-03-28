@@ -59,6 +59,9 @@ locals {
     try(var.config.function, null)            != null ? "cloudfbuild.googleapis.com"       : "",
     try(var.config.function, null)            != null ? "storage-component.googleapis.com" : "",
     try(var.config.function, null)            != null ? "artifactregistry.googleapis.com"  : "",
+    try(var.config.wbs,      null)            != null ? "aiplatform.googleapis.com"        : "",
+    try(var.config.wbs,      null)            != null ? "notebooks.googleapis.com"         : "",
+
   ])
 }
 
@@ -227,3 +230,17 @@ module "bigquery" {
   depends_on = [module.services]
 }
 
+# -------------------------------------------------------------------------------------------
+
+#
+# Vertex AI
+#
+
+module "vaiwb" {
+  source = "../vaiwb"
+
+  project = try( var.project, [] )
+  wbs     = try( var.config.wbs, [] )
+
+  depends_on = [module.services]
+}

@@ -7,11 +7,15 @@
 
 locals {
   defaults = {
-    "sa_prefix" = "crf-",
-    "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
-    "bindings" = [
-      "roles/storage.objectViewer"
-    ]
+    sa_prefix  = "crf-",
+    sa_postfix = "@${var.project.id}.iam.gserviceaccount.com",
+    bindings = []
+#      { 
+#        #role    = "roles/storage.objectViewer",
+#        role    = "",
+#        members = []
+#      }
+#    ]
   }
 }
 
@@ -29,7 +33,7 @@ resource "google_project_iam_binding" "binding" {
   project    = var.project.id
   role       = "projects/${var.project.id}/roles/${each.value.role}"
   members    = [ for member in each.value.members : "${member}@${var.project.id}.iam.gserviceaccount.com" ]
-  depends_on = [google_project_iam_custom_role.role]
+  #depends_on = [google_project_iam_custom_role.role]
 }
 
 resource "google_storage_bucket_object" "code" {
