@@ -28,6 +28,7 @@
 # YAML DEFAULTS
 #
 defaults:
+  zone  : us-east1-c
   labels: &default_labels
     ctlabs_created : true
     owner          : ctlabs_admin
@@ -70,29 +71,30 @@ defaults:
 #    members:
 #      - "serviceAccount:vault-service-account"
 
-#buckets:
+buckets: []
 #  - name     : tf-state
 #    location : us-east1
 #    destroy  : true
 #    labels   : *default_labels
+#    class    : WINTER
 
-vms:
-  - name     : vm-1
-    domain   : ctlabs.internal
-    type     : e2-micro
-    image    : centos-stream-9-v20240213
-    #image   : debian-11-bullseye-v20240213
-    net      : *net1_lan1
-    #script   : ./ppvm.sh
-    spot     : *default_spot
-    nat      : true
-    disks    : 
-      <<: *default_disks
-      vg-data:
-    labels   :
-      <<    : *default_labels
-      ctlabs: service_account_given
-
+vms: []
+#  - name     : vm-4
+#    domain   : ctlabs.internal
+#    type     : e2-micro
+#    image    : centos-stream-9-v20240213
+#    #image   : debian-11-bullseye-v20240213
+#    net      : *net1_lan1
+#    #script   : ./ppvm.sh
+#    spot     : *default_spot
+#    nat      : true
+#    disks    : 
+#      <<: *default_disks
+#      vg-data:
+#    labels   :
+#      <<    : *default_labels
+#      ctlabs: service_account_given
+#
 #  - name     : vm-2
 #    domain   : ctlabs.internal
 #    type     : e2-micro

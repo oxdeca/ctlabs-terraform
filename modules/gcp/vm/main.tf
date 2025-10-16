@@ -5,31 +5,31 @@
 
 locals {
   defaults = {
-    "disk" = { 
-      "fstype"   = "xfs"
-      "opts"     = "defaults"
-      "path"     = "/mnt"
-      "type"     = "pd-ssd" 
-      "size"     = "20" 
-      "mode"     = "READ_WRITE"
-      "detached" = false
-    },
-    "spot" = { 
-      "lifespan" = 8,# in hours
-      "action"   = "STOP" 
-    },
-    "dns" = {
-      "ttl" = 600,
+    disk = { 
+      fstype   = "xfs"
+      opts     = "defaults"
+      path     = "/mnt"
+      type     = "pd-ssd" 
+      size     = "20" 
+      mode     = "READ_WRITE"
+      detached = false
     }
-    "type"       = "e2-micro",
-    "oslogin"    = false,
-    "nat"        = false,
-    "nested"     = false,
-    "vtpm"       = true
-    "protected"  = false,
-    "update"     = true,
-    "sa_prefix"  = "gce-",
-    "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
+    spot = { 
+      lifespan = 8,# in hours
+      action   = "STOP" 
+    }
+    dns = {
+      ttl = 600,
+    }
+    type       = "e2-micro",
+    oslogin    = false,
+    nat        = false,
+    nested     = false,
+    vtpm       = true
+    protected  = false,
+    update     = true,
+    sa_prefix  = "gce-",
+    sa_postfix = "@${var.project.id}.iam.gserviceaccount.com",
   }
   disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, name = startswith(dk, "disk:") ? split(":", dk)[1] : "${vm.name}-${dk}", detached = try(dv.detached, local.defaults.disk.detached ) }, dv ) ] ] )
 }

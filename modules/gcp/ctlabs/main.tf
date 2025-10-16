@@ -61,7 +61,7 @@ locals {
     try(var.config.function, null)            != null ? "artifactregistry.googleapis.com"  : "",
     try(var.config.wbs,      null)            != null ? "aiplatform.googleapis.com"        : "",
     try(var.config.wbs,      null)            != null ? "notebooks.googleapis.com"         : "",
-
+    try(var.config.composer, null)            != null ? "composer.googleapis.com"          : "",
   ])
 }
 
@@ -241,6 +241,21 @@ module "vaiwb" {
 
   project = try( var.project, [] )
   wbs     = try( var.config.wbs, [] )
+
+  depends_on = [module.services]
+}
+
+# -------------------------------------------------------------------------------------------
+
+#
+# Composer
+#
+
+module "composer" {
+  source = "../composer"
+
+  project  = try( var.project, [] )
+  composer = try( var.config.composer, [])
 
   depends_on = [module.services]
 }

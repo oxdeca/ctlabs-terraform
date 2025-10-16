@@ -7,9 +7,12 @@ locals { gcpconf = yamldecode( file("./gcp.conf.yml") ) }
 locals { config  = yamldecode( file("./config.yml") ) }
 
 
-module "secrets" {
-  source = "../../modules/gcp/ctlabs"
+module "project" {
+  #source = "../../modules/gcp/ctlabs"
+  source = "gitbug.com/oxdeca/ctlabs-terraform?ref=dev/modules/gcp/ctlabs"
 
+  netbox = []
   project = local.gcpconf.project
   config  = local.config
 }
+
