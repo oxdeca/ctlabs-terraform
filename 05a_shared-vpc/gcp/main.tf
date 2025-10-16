@@ -9,7 +9,7 @@ locals { config  = yamldecode( file("./config.yml") ) }
 
 module "project" {
   #source = "../../modules/gcp/ctlabs"
-  source = "gitbug.com/oxdeca/ctlabs-terraform?ref=dev/modules/gcp/ctlabs"
+  source = "github.com/oxdeca/ctlabs-terraform?ref=dev/modules/gcp/ctlabs"
 
   netbox = []
   project = local.gcpconf.project

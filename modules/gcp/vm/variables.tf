@@ -8,7 +8,7 @@ variable project { type = any }
 variable netbox  { type = any }
 
 variable vms {
-  type = object({
+  type = list(object({
     name      = string
     type      = optional(string, "e2-micro")
     oslogin   = optional(bool, false)
@@ -33,5 +33,5 @@ variable vms {
       mode     = optional(string, "READ_WRITE")
       detached = optional(bool, false)
     })))
-  })
+  }))
 }
