@@ -1,6 +1,6 @@
 # GCP Project Module
 
-## Example
+## Examples
 
 ```yml
 ---
