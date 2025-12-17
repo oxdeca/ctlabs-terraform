@@ -32,7 +32,7 @@ resource "google_project" "project" {
   org_id              = try(var.project.fid, null) == null ? var.project.oid : null
   folder_id           = try(var.project.oid, null) == null ? var.project.fid : null
   labels              = merge(local.defaults.labels, try(var.project.labels, null))
-  deletion_policy     = var.project.policy
+  deletion_policy     = var.project.delete_policy
   auto_create_network = var.project.create_network
 }
 
