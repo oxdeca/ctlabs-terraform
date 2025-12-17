@@ -17,11 +17,7 @@ variable project {
     sa_delete      = optional(bool, true)           # (?) delete the default service account
     delete_policy  = optional(string, "ABANDON")    # (?) delete policy, ABANDON, PREVENT, or DELETE
     create_network = optional(bool, false)          # (?) create default network
-    services       = optional(list(string), [       # (?) enable apis
-      "compute.googleapis.com",
-      "iam.googleapis.com",
-      "cloudresourcemanager.googleapis.com"
-    ])
+    services       = optional(list(string))         # (?) enable apis
     service_accounts = optional(list(object({       # (?) add service accounts to project
       id   = optional(string)
       name = optional(string)

@@ -5,9 +5,14 @@
 
 locals {
   defaults = {
-    labales = {
+    labels = {
       module = "ctlabs-terraform-module-gcp-project"
     }
+    services = [
+      "compute.googleapis.com",
+      "iam.googleapis.com",
+      "cloudresourcemanager.googleapis.com"
+    ]
   }
 
   project_name = coalesce(var.project.name, var.project.id)
@@ -35,7 +40,7 @@ resource "google_project" "project" {
 # Google API's (Services)
 # -----------------------------------------------------------------------------
 resource "google_project_service" "service" {
-  for_each = toset(var.project.services)
+  for_each = toset(merge(local.defaults.services, var.project.services))
 
   project  = local.project_id
   service  = each.key
