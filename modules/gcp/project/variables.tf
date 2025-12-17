@@ -43,12 +43,12 @@ variable project {
   }
 
   validation {
-    condition     = contains(["ABANDON", "PREVENT", "DELETE"], var.project.policy)
+    condition     = contains(["ABANDON", "PREVENT", "DELETE"], var.project.delete_policy)
     error_message = "The 'policy' attribute must be one of 'ABANDON', 'PREVENT', or 'DELETE'."
   }
 
   validation {
-    condition     = var.project.type != "service" || (var.project.host_vpc != null && var.project.host_vpc != "")
+    condition     = var.project.type != "service" || (var.project.host_project != null && var.project.host_project != "")
     error_message = "If 'type' is 'service' the 'host_project' attribute must be set."
   }
 }
