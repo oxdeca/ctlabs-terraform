@@ -40,7 +40,7 @@ resource "google_project" "project" {
 # Google API's (Services)
 # -----------------------------------------------------------------------------
 resource "google_project_service" "service" {
-  for_each = toset(merge(local.defaults.services, var.project.services))
+  for_each = toset(concat(local.defaults.services, var.project.services))
 
   project  = local.project_id
   service  = each.key
@@ -94,7 +94,7 @@ resource "google_compute_shared_vpc_host_project" "host_project" {
 resource "google_compute_shared_vpc_service_project" "service_project" {
   count = var.project.type == "service" ? 1 : 0
 
-  host_project    = var.project.host_vpc
+  host_project    = var.project.host_project
   service_project = local.project_id
 
   depends_on = [google_project.project, google_project_service.service]
