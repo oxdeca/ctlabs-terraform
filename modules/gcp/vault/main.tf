@@ -10,10 +10,6 @@
 provider "vault" {
   address         = var.vault.url
   skip_tls_verify = !var.vault.ssl_verify
-
-  auth_login_gcp {
-    role = var.vault.gcp_auth_role
-  }
 }
 
 # -----------------------------------------------------------------------------
