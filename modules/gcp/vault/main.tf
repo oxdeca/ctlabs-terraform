@@ -10,10 +10,9 @@ locals {
 
   # 2. Smart Auth Routing (Picks the first non-null value)
   auth_method = coalesce(
-    var.vault.auth_method,                                # 1. Explicit override in YAML
-    local.is_k8s && var.vault.k8s != null ? "k8s" : null, # 2. Auto-detect Kubernetes environment
-    var.vault.gcp != null ? "gcp" : null,                 # 3. Auto-detect GCP configuration
-    "token"                                               # 4. Fallback to local VAULT_TOKEN env var
+    local.is_k8s && var.vault.k8s != null ? "k8s" : null, # 1. Auto-detect Kubernetes environment
+    var.vault.gcp != null ? "gcp" : null,                 # 2. Auto-detect GCP configuration
+    "token"                                               # 3. Fallback to local VAULT_TOKEN env var
   )
 }
 
@@ -21,8 +20,7 @@ locals {
 # Provider Configuration & Login
 # -----------------------------------------------------------------------------
 provider "vault" {
-  address         = var.vault.url
-  skip_tls_verify = !var.vault.tls_verify
+  address = var.vault.url
 
   # 1. Kubernetes Auth (e.g., for Atlantis pods)
   dynamic "auth_login" {
@@ -52,6 +50,18 @@ provider "vault" {
   # are skipped, and the provider natively looks for the VAULT_TOKEN env var.
 }
 
+# -----------------------------------------------------------------------------
+# Read Secrets (Ephemeral strictly for Providers)
+# -----------------------------------------------------------------------------
+ephemeral "vault_kv_secret_v2" "providers" {
+  for_each = { 
+    for secret in var.vault.secrets : secret.name => secret 
+    if secret.type == "ephemeral" 
+  }
+
+  mount = coalesce(each.value.mount, var.vault.mount)
+  name  = each.value.path
+}
 
 # -----------------------------------------------------------------------------
 # Read Secrets (Data strictly for Resources)
@@ -62,21 +72,6 @@ data "vault_kv_secret_v2" "secrets" {
     if secret.type == "data" 
   }
 
-  # CHANGED: coalesce skips nulls and grabs the default
-  mount = coalesce(each.value.mount, var.vault.mount)
-  name  = each.value.path
-}
-
-# -----------------------------------------------------------------------------
-# Read Secrets (Ephemeral strictly for Providers)
-# -----------------------------------------------------------------------------
-ephemeral "vault_kv_secret_v2" "ephemeral_secrets" {
-  for_each = { 
-    for secret in var.vault.secrets : secret.name => secret 
-    if secret.type == "ephemeral" 
-  }
-
-  # CHANGED: coalesce skips nulls and grabs the default
   mount = coalesce(each.value.mount, var.vault.mount)
   name  = each.value.path
 }
@@ -84,14 +79,14 @@ ephemeral "vault_kv_secret_v2" "ephemeral_secrets" {
 # -----------------------------------------------------------------------------
 # Output
 # -----------------------------------------------------------------------------
+output "providers" {
+  description = "Ephemeral secrets (type: ephemeral) strictly for provider configurations."
+  value       = { for key, secret in ephemeral.vault_kv_secret_v2.providers : key => secret.data }
+  ephemeral   = true
+}
+
 output "secrets" {
   description = "Standard sensitive secrets (type: data) for use in standard resources."
   value       = { for key, secret in data.vault_kv_secret_v2.secrets : key => secret.data }
   sensitive   = true
-}
-
-output "ephemeral_secrets" {
-  description = "Ephemeral secrets (type: ephemeral) strictly for provider configurations."
-  value       = { for key, secret in ephemeral.vault_kv_secret_v2.ephemeral_secrets : key => secret.data }
-  ephemeral   = true
 }
