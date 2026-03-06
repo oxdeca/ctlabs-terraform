@@ -12,7 +12,7 @@ terraform {
 }
 
 provider "netbox" {
-  server_url           = "https://netbox.engi.oanda.com:8081"
-  api_token            = module.vault.secrets["netbox"].api_token
+  server_url           = module.vault.ephemeral_secrets["netbox"].server_url
+  api_token            = module.vault.ephemeral_secrets["netbox"].api_token
   allow_insecure_https = true
 }

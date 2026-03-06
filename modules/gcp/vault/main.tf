@@ -3,21 +3,76 @@
 # License : MIT
 # -----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# Hashicorp Vault - login
-# -----------------------------------------------------------------------------
-#
-provider "vault" {
-  address         = var.vault.url
-  skip_tls_verify = !var.vault.ssl_verify
+locals {
+  # 1. Check if the standard K8s JWT file exists (proves we are in a Pod)
+  jwt_path = try(var.vault.k8s.jwt_path, "/var/run/secrets/kubernetes.io/serviceaccount/token")
+  is_k8s   = fileexists(local.jwt_path)
+
+  # 2. Smart Auth Routing (Picks the first non-null value)
+  auth_method = coalesce(
+    var.vault.auth_method,                                # 1. Explicit override in YAML
+    local.is_k8s && var.vault.k8s != null ? "k8s" : null, # 2. Auto-detect Kubernetes environment
+    var.vault.gcp != null ? "gcp" : null,                 # 3. Auto-detect GCP configuration
+    "token"                                               # 4. Fallback to local VAULT_TOKEN env var
+  )
 }
 
 # -----------------------------------------------------------------------------
-# Hashicorp Vault - read secrets
+# Provider Configuration & Login
 # -----------------------------------------------------------------------------
-#
-ephemeral "vault_kv_secret_v2" "secrets" {
-  for_each = { for secret in var.vault.secrets : secret.name => secret }
+provider "vault" {
+  address         = var.vault.url
+  skip_tls_verify = !var.vault.tls_verify
+
+  # 1. Kubernetes Auth (e.g., for Atlantis pods)
+  dynamic "auth_login" {
+    for_each = local.auth_method == "k8s" ? [1] : []
+    content {
+      path = "auth/${var.vault.k8s.mount_path}/login"
+      parameters = {
+        role = var.vault.k8s.role
+        jwt  = file(local.jwt_path)
+      }
+    }
+  }
+
+  # 2. GCP Auth (e.g., for Cloud Build or Compute Engine)
+  dynamic "auth_login" {
+    for_each = local.auth_method == "gcp" ? [1] : []
+    content {
+      path = "auth/${var.vault.gcp.mount_path}/login"
+      parameters = {
+        role = var.vault.gcp.role
+        # The Vault provider automatically fetches the JWT from the GCP Metadata server.
+      }
+    }
+  }
+
+  # Note on "token" auth: If local.auth_method == "token", both dynamic blocks 
+  # are skipped, and the provider natively looks for the VAULT_TOKEN env var.
+}
+
+# -----------------------------------------------------------------------------
+# Read Secrets (Ephemeral strictly for Providers)
+# -----------------------------------------------------------------------------
+ephemeral "vault_kv_secret_v2" "ephemeral_secrets" {
+  for_each = { 
+    for secret in var.vault.secrets : secret.name => secret 
+    if secret.type == "ephemeral" 
+  }
+
+  mount = try(each.value.mount, var.vault.mount)
+  name  = each.value.path
+}
+
+# -----------------------------------------------------------------------------
+# Read Secrets (Data strictly for Resources)
+# -----------------------------------------------------------------------------
+data "vault_kv_secret_v2" "secrets" {
+  for_each = { 
+    for secret in var.vault.secrets : secret.name => secret 
+    if secret.type == "data" 
+  }
 
   mount = try(each.value.mount, var.vault.mount)
   name  = each.value.path
@@ -26,40 +81,14 @@ ephemeral "vault_kv_secret_v2" "secrets" {
 # -----------------------------------------------------------------------------
 # Output
 # -----------------------------------------------------------------------------
-#
 output "secrets" {
-  value     = { for key, secret in ephemeral.vault_kv_secret_v2.secrets : key => secret.data }
-  ephemeral = true
+  description = "Standard sensitive secrets (type: data) for use in standard resources."
+  value       = { for key, secret in data.vault_kv_secret_v2.dsecrets : key => secret.data }
+  sensitive   = true
 }
 
-
-# -----------------------------------------------------------------------------
-# Google Secret Manager (GSM) - get approle credentials
-# -----------------------------------------------------------------------------
-#
-#ephemeral "google_secret_manager_secret_version" "role_id" {
-#  secret  = var.vault.gsm.role_id
-#  project = var.vault.gsm.project
-#}
-#
-#ephemeral "google_secret_manager_secret_version" "secret_id" {
-#  secret  = var.vault.gsm.secret_id
-#  project = var.vault.gsm.project
-#}
-
-# -----------------------------------------------------------------------------
-# Hashicorp Vault - login
-# -----------------------------------------------------------------------------
-#
-#provider "vault" {
-#  address = var.vault.url
-#  skip_tls_verify = !var.vault.ssl_verify
-#
-#  auth_login {
-#    path = "auth/${var.vault.approle}/login"
-#    parameters = {
-#      role_id   = ephemeral.google_secret_manager_secret_version.role_id.secret_data
-#      secret_id = ephemeral.google_secret_manager_secret_version.secret_id.secret_data
-#    }
-#  }
-#}
+output "ephemeral_secrets" {
+  description = "Ephemeral secrets (type: ephemeral) strictly for provider configurations."
+  value       = { for key, secret in ephemeral.vault_kv_secret_v2.esecrets : key => secret.data }
+  ephemeral   = true
+}
