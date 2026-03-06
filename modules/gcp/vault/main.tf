@@ -52,18 +52,6 @@ provider "vault" {
   # are skipped, and the provider natively looks for the VAULT_TOKEN env var.
 }
 
-# -----------------------------------------------------------------------------
-# Read Secrets (Ephemeral strictly for Providers)
-# -----------------------------------------------------------------------------
-ephemeral "vault_kv_secret_v2" "ephemeral_secrets" {
-  for_each = { 
-    for secret in var.vault.secrets : secret.name => secret 
-    if secret.type == "ephemeral" 
-  }
-
-  mount = try(each.value.mount, var.vault.mount)
-  name  = each.value.path
-}
 
 # -----------------------------------------------------------------------------
 # Read Secrets (Data strictly for Resources)
@@ -74,7 +62,22 @@ data "vault_kv_secret_v2" "secrets" {
     if secret.type == "data" 
   }
 
-  mount = try(each.value.mount, var.vault.mount)
+  # CHANGED: coalesce skips nulls and grabs the default
+  mount = coalesce(each.value.mount, var.vault.mount)
+  name  = each.value.path
+}
+
+# -----------------------------------------------------------------------------
+# Read Secrets (Ephemeral strictly for Providers)
+# -----------------------------------------------------------------------------
+ephemeral "vault_kv_secret_v2" "ephemeral_secrets" {
+  for_each = { 
+    for secret in var.vault.secrets : secret.name => secret 
+    if secret.type == "ephemeral" 
+  }
+
+  # CHANGED: coalesce skips nulls and grabs the default
+  mount = coalesce(each.value.mount, var.vault.mount)
   name  = each.value.path
 }
 
