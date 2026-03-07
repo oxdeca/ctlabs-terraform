@@ -53,7 +53,7 @@ provider "vault" {
 # -----------------------------------------------------------------------------
 # Read Secrets (Ephemeral strictly for Providers)
 # -----------------------------------------------------------------------------
-ephemeral "vault_kv_secret_v2" "providers" {
+ephemeral "vault_kv_secret_v2" "secrets" {
   for_each = { 
     for secret in var.vault.secrets : secret.name => secret 
     if secret.type == "ephemeral" 
@@ -66,7 +66,7 @@ ephemeral "vault_kv_secret_v2" "providers" {
 # -----------------------------------------------------------------------------
 # Read Secrets (Data strictly for Resources)
 # -----------------------------------------------------------------------------
-data "vault_kv_secret_v2" "secrets" {
+data "vault_kv_secret_v2" "data_secrets" {
   for_each = { 
     for secret in var.vault.secrets : secret.name => secret 
     if secret.type == "data" 
@@ -81,12 +81,12 @@ data "vault_kv_secret_v2" "secrets" {
 # -----------------------------------------------------------------------------
 output "providers" {
   description = "Ephemeral secrets (type: ephemeral) strictly for provider configurations."
-  value       = { for key, secret in ephemeral.vault_kv_secret_v2.providers : key => secret.data }
+  value       = { for key, secret in ephemeral.vault_kv_secret_v2.secrets : key => secret.data }
   ephemeral   = true
 }
 
 output "secrets" {
   description = "Standard sensitive secrets (type: data) for use in standard resources."
-  value       = { for key, secret in data.vault_kv_secret_v2.secrets : key => secret.data }
+  value       = { for key, secret in data.vault_kv_secret_v2.data_secrets : key => secret.data }
   sensitive   = true
 }
