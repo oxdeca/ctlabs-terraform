@@ -79,13 +79,13 @@ data "vault_kv_secret_v2" "data_secrets" {
 # -----------------------------------------------------------------------------
 # Output
 # -----------------------------------------------------------------------------
-output "providers" {
+output "secrets" {
   description = "Ephemeral secrets (type: ephemeral) strictly for provider configurations."
   value       = { for key, secret in ephemeral.vault_kv_secret_v2.secrets : key => secret.data }
   ephemeral   = true
 }
 
-output "secrets" {
+output "data_secrets" {
   description = "Standard sensitive secrets (type: data) for use in standard resources."
   value       = { for key, secret in data.vault_kv_secret_v2.data_secrets : key => secret.data }
   sensitive   = true
