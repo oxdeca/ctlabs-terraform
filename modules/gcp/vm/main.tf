@@ -15,8 +15,8 @@ locals {
       detached = false
     }
     spot = { 
-      lifespan = 8,# in hours
-      action   = "STOP" 
+      ttl    = 8,# in hours
+      action = "STOP" 
     }
     dns = {
       ttl = 600,
@@ -37,6 +37,7 @@ locals {
 resource "google_service_account" "sa" {
   for_each = { for vm in var.vms : vm.name => vm }
 
+  project_id   = var.project.id
   account_id   = "${local.defaults.sa_prefix}${each.value.name}"
   display_name = try( each.value.name, null )
   description  = try( each.value.desc, null )
@@ -44,10 +45,11 @@ resource "google_service_account" "sa" {
 
 resource "google_compute_disk" "attached" {
   for_each = { for disk in local.disks : disk.name => disk if !startswith( disk.disk_id, "boot" ) } 
-  name     = each.key
-  type     = try( each.value.type, local.defaults.disk["type"] )
-  size     = try( each.value.size, local.defaults.disk["size"] )
-  labels   = try( each.value.labels, {} )
+  name       = each.key
+  project_id = var.project.id
+  type       = try( each.value.type, local.defaults.disk["type"] )
+  size       = try( each.value.size, local.defaults.disk["size"] )
+  labels     = try( each.value.labels, {} )
 
   # as removing/changing a disk configurations isn't expected to happen often and
   # because a disk configuration change(rename, reduce size) recreates a disk 
@@ -65,47 +67,6 @@ resource "google_compute_disk" "attached" {
     prevent_destroy = false
   }
 }
-
-# --------------------------------
-# Ansible Token
-# --------------------------------
-
-#provider "vault" {
-#  address = try( var.vault.addr, "" )
-#  token   = try( var.vault.token, "" )
-#}
-#
-#resource "vault_policy" "sssd" {
-#  name   = "vp_sssd"
-#  policy = <<EOT
-#path "kv/data/sssd" {
-#  capabilities = ["read"]
-#}
-#EOT
-#}
-#
-#resource "vault_token_auth_backend_role" "gcepp" {
-#  role_name           = "vr_vm"
-#  allowed_policies    = ["vp_sssd"]
-#  disallowed_policies = ["default"]
-#  token_ttl           = 600
-#  token_type          = "service"
-#}
-#
-#resource "vault_token" "ansible" {
-#  #count = var.create_token ? 1 : 0
-#
-#  role_name = "vr_vm"
-#  policies  = ["vp_sssd"]
-#  renewable = false
-#  num_uses  = 1
-#  ttl       = "10m"
-#
-#  metadata = {
-#    "purpose" = "ansible"
-#  }
-#}
-
 
 # ---
 # VM
@@ -202,12 +163,12 @@ resource "google_compute_instance" "vm" {
       instance_termination_action = try( each.value.spot.action, local.defaults.spot.action )
 
       max_run_duration {
-        seconds = try( each.value.spot.lifespan * 3600, local.defaults.spot.lifespan * 3600 )
+        seconds = each.value.spot.ttl * 3600
       }
     }
   }
 
-  depends_on = [google_compute_disk.attached]
+  depends_on = [google_service_account.sa, google_compute_disk.attached]
 }
 
 resource "google_dns_record_set" "rr" {
