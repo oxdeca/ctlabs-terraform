@@ -121,12 +121,12 @@ resource "google_compute_instance" "vm" {
   }
 
   metadata = strcontains(each.value.image, "windows") ? {
-    startup-script    = "${path.module}/scripts/windows.ps1"
+    startup-script    = file("${path.module}/scripts/windows.ps1")
     ctlabs_base_disks = jsonencode([for dk, dv in merge(local.defaults.disks, try(each.value.disks, {})) : merge({ name = "${each.value.name}-${dk}" }, dv) if !startswith(dk, "boot")])
     labels            = jsonencode(merge(local.defaults.labels, try(each.value.labels, {})))
     } : {
     enable-oslogin    = each.value.oslogin
-    startup-script    = "${path.module}/scripts/linux.sh"
+    startup-script    = file("${path.module}/scripts/linux.sh")
     ctlabs_base_disks = jsonencode([for dk, dv in merge(local.defaults.disks, try(each.value.disks, {})) : merge({ name = try(dv.type, null) == "bucket" ? dk : "${each.value.name}-${dk}", fstype = dv.fstype }, dv) if !startswith(dk, "boot")])
     ssh-keys          = each.value.ssh_keys
     labels            = jsonencode(merge(local.defaults.labels, try(each.value.labels, {})))
