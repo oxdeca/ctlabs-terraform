@@ -43,6 +43,6 @@ variable vms {
       fstype   = optional(string, "xfs")
       mode     = optional(string, "READ_WRITE")
       detached = optional(bool, false)
-    })){ boot = { size = 20, path = "/" } })
+    })), { boot = { size = 20, path = "/" } })
   }))
 }
