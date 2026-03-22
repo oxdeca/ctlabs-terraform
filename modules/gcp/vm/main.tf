@@ -4,15 +4,22 @@
 # -----------------------------------------------------------------------------
 
 locals {
-  module_defaults = {
+  defaults = {
     labels = {
-      module = "ctlabs-module-gcp-vm"
+      module = "ctlabs-terraform-module-gcp-vm"
     }
     sa_prefix = "gce-"
+    disks = {
+      boot = {
+        size   = 20
+        path   = "/"
+        fstype = "xfs"
+      }
+    }
   }
 
   blk_fs    = ["xfs", "ext4", "ntfs"]
-  blk_disks = flatten([for vm in var.vms : [for dk, dv in vm.disks : merge({ vm_id = vm.name, disk_id = dk, zone = vm.zone }, dv) if contains(local.blk_fs, try(dv.fstype, ""))]])
+  blk_disks = flatten([for vm in var.vms : [for dk, dv in merge( local.defaults.disks, vm.disks) : merge({ vm_id = vm.name, disk_id = dk, zone = vm.zone }, dv) if contains(local.blk_fs, try(dv.fstype, ""))]])
   buckets   = flatten([for vm in var.vms : [for dk, dv in try(vm.disks, {}) : merge({ vm_id = vm.name, disk_id = dk, zone = vm.zone }, dv) if try(dv.stype, null) == "bucket"]])
 }
 
@@ -24,7 +31,7 @@ resource "google_service_account" "sa" {
   for_each = { for vm in var.vms : vm.name => vm }
 
   project      = var.project.id
-  account_id   = "${local.module_defaults.sa_prefix}${each.value.name}"
+  account_id   = "${local.defaults.sa_prefix}${each.value.name}"
   display_name = try(each.value.name, null)
   description  = try(each.value.desc, null)
 }
@@ -41,7 +48,7 @@ resource "google_compute_disk" "disks" {
   type    = each.value.type
   size    = each.value.size
   zone    = each.value.zone
-  labels  = merge(local.module_defaults.labels, try(each.value.labels, {}))
+  labels  = merge(local.defaults.labels, try(each.value.labels, {}))
 
   lifecycle {
     prevent_destroy = false
@@ -74,7 +81,7 @@ resource "google_compute_instance" "vm" {
   zone                      = each.value.zone
   allow_stopping_for_update = each.value.restart
   deletion_protection       = each.value.protected
-  labels                    = merge(local.module_defaults.labels, try(each.value.labels, {}))
+  labels                    = merge(local.defaults.labels, try(each.value.labels, {}))
   tags                      = distinct(try(each.value.tags, []))
 
   boot_disk {
@@ -115,13 +122,13 @@ resource "google_compute_instance" "vm" {
   metadata = strcontains(each.value.image, "windows") ? {
     startup-script    = "${path.module}/scripts/windows.ps1"
     ctlabs_base_disks = jsonencode([for dk, dv in each.value.disks : merge({ name = "${each.value.name}-${dk}" }, dv) if !startswith(dk, "boot")])
-    labels            = jsonencode(merge(local.module_defaults.labels, try(each.value.labels, {})))
+    labels            = jsonencode(merge(local.defaults.labels, try(each.value.labels, {})))
     } : {
     enable-oslogin    = each.value.oslogin
     startup-script    = "${path.module}/scripts/linux.sh.tpl"
     ctlabs_base_disks = jsonencode([for dk, dv in each.value.disks : merge({ name = try(dv.type, null) == "bucket" ? dk : "${each.value.name}-${dk}", fstype = dv.fstype }, dv) if !startswith(dk, "boot")])
     ssh-keys          = each.value.ssh_keys
-    labels            = jsonencode(merge(local.module_defaults.labels, try(each.value.labels, {})))
+    labels            = jsonencode(merge(local.defaults.labels, try(each.value.labels, {})))
   }
 
   service_account {
@@ -154,7 +161,7 @@ resource "google_compute_address" "nat_ip" {
   project      = var.project.id
   region       = replace(each.value.zone, "/-[a-z]$/", "")
   address_type = "EXTERNAL"
-  labels       = merge(local.module_defaults.labels, try(each.value.labels, {}))
+  labels       = merge(local.defaults.labels, try(each.value.labels, {}))
 }
 
 # -----------------------------------------------------------------------------

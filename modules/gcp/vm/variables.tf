@@ -27,7 +27,7 @@ variable vms {
     restart   = optional(bool, false)
     ssh_keys  = optional(string)
     labels    = optional(map(string))
-    tags      = optional(list(string))
+    tags      = optional(list(string), [])
     spot = optional(object({
       ttl    = optional(number, 8)  # in hours
       action = optional(string, "STOP")
@@ -43,6 +43,6 @@ variable vms {
       fstype   = optional(string, "xfs")
       mode     = optional(string, "READ_WRITE")
       detached = optional(bool, false)
-    })), { boot = { size = 20, path = "/" } })
+    })), {})
   }))
 }
