@@ -45,7 +45,7 @@ resource "google_service_account" "sa" {
 
 resource "google_compute_disk" "attached" {
   for_each = { for disk in local.disks : disk.name => disk if !startswith( disk.disk_id, "boot" ) } 
-  
+
   project   = var.project.id
   name       = each.key
   type       = try( each.value.type, local.defaults.disk["type"] )
@@ -110,7 +110,7 @@ resource "google_compute_instance" "vm" {
   }
 
   network_interface {
-    subnetwork = try( var.project.vpc_type, "") == "service" ? "projects/${var.project.shared_vpc}/${each.value.net}" : each.value.net
+    subnetwork = try( var.project.type, "") == "service" ? "projects/${var.project.host_project}/${each.value.network}" : each.value.network
     network_ip = try( each.value.ipv4, null )
 
     dynamic access_config {

@@ -13,8 +13,10 @@ variable "project" {
 variable vms {
   type = list(object({
     name      = string
+    image     = string
     domain    = string
     network   = string
+    ipv4      = optional(string)
     type      = optional(string, "e2-micro")
     nat       = optional(bool, false)
     nested    = optional(bool, false)
