@@ -28,7 +28,7 @@ variable "network" {
       purpose        = optional(string)
       role           = optional(string)
       private_access = optional(bool, true)
-      stack          = optional(string, "IPV4")
+      stack          = optional(string, "IPV4_ONLY")
       ipv6_access    = optional(string)
       
       ranges = optional(list(object({
@@ -49,9 +49,9 @@ variable "network" {
   validation {
     condition = alltrue(flatten([
       for net in var.network : [
-        for sub in coalesce(net.subnets, []) : contains(["IPV4", "IPV4_IPV6"], sub.stack)
+        for sub in coalesce(net.subnets, []) : contains(["IPV4_ONLY", "IPV4_IPV6"], sub.stack)
       ]
     ]))
-    error_message = "The 'stack' attribute in all subnets must be either 'IPV4' or 'IPV4_IPV6'."
+    error_message = "The 'stack' attribute in all subnets must be either 'IPV4_ONLY' or 'IPV4_IPV6'."
   }
 }
