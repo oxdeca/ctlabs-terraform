@@ -126,7 +126,7 @@ resource "google_compute_instance" "vm" {
     labels            = jsonencode(merge(local.defaults.labels, try(each.value.labels, {})))
     } : {
     enable-oslogin    = each.value.oslogin
-    startup-script    = "${path.module}/scripts/linux.sh.tpl"
+    startup-script    = "${path.module}/scripts/linux.sh"
     ctlabs_base_disks = jsonencode([for dk, dv in merge(local.defaults.disks, try(each.value.disks, {})) : merge({ name = try(dv.type, null) == "bucket" ? dk : "${each.value.name}-${dk}", fstype = dv.fstype }, dv) if !startswith(dk, "boot")])
     ssh-keys          = each.value.ssh_keys
     labels            = jsonencode(merge(local.defaults.labels, try(each.value.labels, {})))
