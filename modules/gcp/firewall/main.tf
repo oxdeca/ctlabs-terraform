@@ -19,6 +19,7 @@ locals {
 resource "google_compute_firewall" "ingress" {
   for_each = { for rule in local.ingress : rule.name => rule }
 
+  project       = var.project.id
   direction     = "INGRESS"
   project       = try( each.value.project, null)
   name          = each.value.name
@@ -56,6 +57,7 @@ resource "google_compute_firewall" "ingress" {
 resource "google_compute_firewall" "egress" {
   for_each = { for rule in local.egress : rule.name => rule }
 
+  project            = var.project.id
   direction          = "EGRESS"
   project            = try( each.value.project, null)
   name               = each.value.name
