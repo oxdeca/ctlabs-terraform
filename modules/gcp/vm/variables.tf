@@ -34,7 +34,7 @@ variable vms {
     }), {})
     dns = optional(object({
       ttl = optional(number, 600)
-    }))
+    }), {})
     disks = optional(map(object({
       type     = optional(string, "pd-ssd")
       size     = optional(number, 20)
