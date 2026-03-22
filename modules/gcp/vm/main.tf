@@ -37,7 +37,6 @@ locals {
 resource "google_service_account" "sa" {
   for_each = { for vm in var.vms : vm.name => vm }
 
-  project_id   = var.project.id
   account_id   = "${local.defaults.sa_prefix}${each.value.name}"
   display_name = try( each.value.name, null )
   description  = try( each.value.desc, null )
@@ -46,7 +45,6 @@ resource "google_service_account" "sa" {
 resource "google_compute_disk" "attached" {
   for_each = { for disk in local.disks : disk.name => disk if !startswith( disk.disk_id, "boot" ) } 
   name       = each.key
-  project_id = var.project.id
   type       = try( each.value.type, local.defaults.disk["type"] )
   size       = try( each.value.size, local.defaults.disk["size"] )
   labels     = try( each.value.labels, {} )
