@@ -28,7 +28,7 @@ variable "network" {
       purpose        = optional(string)
       role           = optional(string)
       private_access = optional(bool, true)
-      stack          = optional(string, "IPV4_ONLY")
+      stack          = optional(string, "IPV4")
       ipv6_access    = optional(string)
       
       ranges = optional(list(object({
