@@ -3,6 +3,17 @@
 # License : MIT
 # -----------------------------------------------------------------------------
 
+
+
+module "services" {
+  source = "../services"
+
+  services = try( var.gke.services, [] )
+  project  = try( var.gke.project, [] )
+
+#  depends_on = [module.project]
+}
+
 # -----------------------------------------------------------------------------
 # GKE Control Plane (Cluster)
 # -----------------------------------------------------------------------------

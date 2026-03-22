@@ -4,6 +4,8 @@
 
 gke:
   project: ctlabs-prj-2025101601
+  services:
+    - container.googleapis.com
   location: us-central1-a
   name: dev-cluster-01
   network: default

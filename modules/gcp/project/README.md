@@ -7,7 +7,7 @@
 
 # -----------------------------------------------------------------------------
 # File        : ctlabs-terraform/prj/gcp/config.yml
-# Description : default project configuration for gcp with regular vpc
+# Description : project configuration for gcp with regular vpc
 # -----------------------------------------------------------------------------
 
 project:
@@ -30,7 +30,7 @@ project:
 
 # -----------------------------------------------------------------------------
 # File        : ctlabs-terraform/prj/gcp/config.yml
-# Description : default project configuration for gcp as host vpc
+# Description : project configuration for gcp as host vpc
 # -----------------------------------------------------------------------------
 
 project:
@@ -53,7 +53,7 @@ project:
 
 # -----------------------------------------------------------------------------
 # File        : ctlabs-terraform/prj/gcp/config.yml
-# Description : default project configuration for gcp as service vpc
+# Description : project configuration for gcp as service vpc
 # -----------------------------------------------------------------------------
 
 project:

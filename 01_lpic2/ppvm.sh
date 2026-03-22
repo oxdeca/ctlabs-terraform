@@ -57,12 +57,17 @@ PKGS=(
   'qemu-img'
   'cloud-utils-growpart'
   'make'
+  'gcc'
+  'ruby-devel'
+  'redhat-rpm-config'
 )
 
 GEMS=(
   'webrick'
   'sinatra'
   'rackup'
+  'faye-websocket'
+  'puma'
 )
 
 CTIMGS=(
