@@ -92,7 +92,7 @@ resource "google_compute_instance" "vm" {
 
   network_interface {
     subnetwork         = each.value.network
-    subnetwork_project = var.project.host_project
+    subnetwork_project = try(var.project.host_project)
     network_ip         = each.value.ipv4
 
     dynamic "access_config" {
