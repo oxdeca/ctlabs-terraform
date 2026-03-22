@@ -139,7 +139,7 @@ resource "google_compute_instance" "vm" {
 
   dynamic "scheduling" {
 
-    for_each = each.value.spot
+    for_each = try(each.value.spot, null) != null ? toset([1]) : toset([])
     content {
       preemptible                 = true
       automatic_restart           = false
