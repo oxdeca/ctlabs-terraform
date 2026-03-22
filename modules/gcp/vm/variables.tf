@@ -16,6 +16,7 @@ variable vms {
     image     = string
     domain    = string
     network   = string
+    zone      = string
     ipv4      = optional(string)
     type      = optional(string, "e2-micro")
     nat       = optional(bool, false)
@@ -24,7 +25,6 @@ variable vms {
     oslogin   = optional(bool, false)
     vtpm      = optional(bool, true)
     restart   = optional(bool, false)
-    zone      = optional(string)
     ssh_keys  = optional(string)
     labels    = optional(map(string))
     tags      = optional(list(string))
