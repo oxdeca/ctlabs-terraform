@@ -31,7 +31,7 @@ variable vms {
     spot = optional(object({
       ttl    = optional(number, 8)  # in hours
       action = optional(string, "STOP")
-    }))
+    }), {})
     dns = optional(object({
       ttl = optional(number, 600)
     }))
@@ -43,6 +43,6 @@ variable vms {
       fstype   = optional(string, "xfs")
       mode     = optional(string, "READ_WRITE")
       detached = optional(bool, false)
-    })))
+    })){ boot = { size = 20, path = "/" } })
   }))
 }
