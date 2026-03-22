@@ -14,6 +14,7 @@ locals {
         size   = 20
         path   = "/"
         fstype = "xfs"
+        type   = "pd-standard"
       }
     }
   }
