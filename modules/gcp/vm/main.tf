@@ -88,8 +88,8 @@ resource "google_compute_instance" "vm" {
     device_name = "${each.value.name}-boot"
     initialize_params {
       image = each.value.image
-      type  = each.value.disks.boot.type
-      size  = each.value.disks.boot.size
+      type  = try( each.value.disks.boot.type, local.defaults.disks.boot.type )
+      size  = try( each.value.disks.boot.size, local.defaults.disks.boot.size )
     }
   }
 
