@@ -165,7 +165,7 @@ resource "google_dns_record_set" "rr" {
 
   managed_zone = replace(each.value.domain, ".", "-")
   name         = "${each.value.name}.${each.value.domain}."
-  project      = var.project.host_project
+  project      = try( var.project.host_project, var.project.id )
   type         = "A"
   ttl          = each.value.dns_ttl
   rrdatas      = [google_compute_instance.vm[each.key].network_interface[0].network_ip]
