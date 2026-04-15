@@ -34,6 +34,14 @@ variable project {
         role    = optional(string)
         members = optional(list(string))
       })), [])
+      deny_rules = optional(list(object({
+        id                = string
+        title             = optional(string)
+        desc              = optional(string)
+        perms             = list(string)
+        denied_principals = list(string)
+        exceptions        = optional(list(string), [])
+      })), [])
     }), {})
   })
 

@@ -1,40 +1,81 @@
 # -----------------------------------------------------------------------------
 # File    : ctlabs-terraform/modules/gcp/gke/main.tf
-# License : MIT
 # -----------------------------------------------------------------------------
 
-
+locals {
+  defaults = {
+    labels = {
+      module = "ctlabs-terraform-module-gke"
+    }
+    sa_prefix = "gke-"
+  }
+}
 
 module "services" {
   source = "../services"
 
-  services = try( var.gke.services, [] )
-  project  = try( var.gke.project, [] )
+  services = var.gke.services
+  project  = var.gke.project
+}
 
-#  depends_on = [module.project]
+# -----------------------------------------------------------------------------
+# Service Accounts
+# -----------------------------------------------------------------------------
+
+resource "google_service_account" "sa" {
+  project      = var.gke.project
+  account_id   = "${local.defaults.sa_prefix}${var.gke.name}"
+  display_name = try(var.gke.name, null)
+  description  = try(var.gke.desc, null)
 }
 
 # -----------------------------------------------------------------------------
 # GKE Control Plane (Cluster)
 # -----------------------------------------------------------------------------
 resource "google_container_cluster" "primary" {
-  name     = var.gke.name
-  project  = var.gke.project
-  location = var.gke.location
+  name                     = var.gke.name
+  location                 = var.gke.location
+  project                  = var.gke.project
+  network                  = var.gke.network
+  subnetwork               = var.gke.subnetwork
+  enable_autopilot         = var.gke.autopilot ? true : null
+  remove_default_node_pool = var.gke.autopilot ? null : true
+  initial_node_count       = var.gke.autopilot ? null : 1
+  deletion_protection      = var.gke.deletion_protection
+  default_max_pods_per_node = var.gke.autopilot ? null : 32
 
-  network    = var.gke.network
-  subnetwork = var.gke.subnetwork
-
-  # Best Practice: We delete the default pool created by GCP and manage
-  # node pools natively via the google_container_node_pool resource below.
-  remove_default_node_pool = true
-  initial_node_count       = 1
-
-  # Workload Identity is the modern standard for Pod-to-GCP authentication.
-  # Highly recommended even for minimum clusters.
-  workload_identity_config {
-    workload_pool = "${var.gke.project}.svc.id.goog"
+  timeouts {
+    create = "30m"
+    update = "30m"
+    delete = "30m"
   }
+
+  dynamic "node_config" {
+    for_each = var.gke.autopilot ? [] : [1]
+    content {
+      service_account = google_service_account.sa.email
+    }
+  }
+
+  # 1. VPC-Native Routing (Connects the Pods /23 and Services /26)
+  dynamic "ip_allocation_policy" {
+    for_each = var.gke.pods_range_name != null ? [1] : []
+    content {
+      cluster_secondary_range_name  = var.gke.pods_range_name
+      services_secondary_range_name = var.gke.svcs_range_name
+    }
+  }
+
+  # 2. Private Cluster Setup (Connects the Master /28)
+  dynamic "private_cluster_config" {
+    for_each = var.gke.master_cidr != null ? [1] : []
+    content {
+      enable_private_nodes    = true
+      enable_private_endpoint = false
+      master_ipv4_cidr_block  = var.gke.master_cidr
+    }
+  }
+
 }
 
 # -----------------------------------------------------------------------------
@@ -43,28 +84,24 @@ resource "google_container_cluster" "primary" {
 resource "google_container_node_pool" "pools" {
   for_each = { for pool in var.gke.node_pools : pool.name => pool }
 
-  name       = each.value.name
-  project    = var.gke.project
-  location   = var.gke.location
-  cluster    = google_container_cluster.primary.name
-  node_count = each.value.node_count
+  name              = each.value.name
+  cluster           = google_container_cluster.primary.name
+  location          = var.gke.location
+  project           = var.gke.project
+  node_count        = each.value.node_count
+  max_pods_per_node = each.value.max_pods_per_node
 
   node_config {
+    service_account = google_service_account.sa.email
     machine_type = each.value.machine_type
     disk_size_gb = each.value.disk_size_gb
     disk_type    = each.value.disk_type
-
-    # Standard minimum OAuth scopes required for the nodes to function
-    oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform"
-    ]
   }
 }
 
 # -----------------------------------------------------------------------------
 # GKE OUTPUTS
 # -----------------------------------------------------------------------------
-
 output "cluster_name" {
   description = "The name of the GKE cluster."
   value       = google_container_cluster.primary.name

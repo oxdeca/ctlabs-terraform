@@ -1,0 +1,148 @@
+---
+
+# -----------------------------------------------------------------------------
+# File        : ctlabs-terraform/ctlabs-dev-standalone/config.yml
+# Description : default project configuration for gcp
+# -----------------------------------------------------------------------------
+
+vault:
+  secrets:
+    - name: project
+      path: dev/ctlabs-dev-standalone
+      type: data
+
+defaults:
+  zone: &default_zone us-east1-c
+  labels: &default_labels
+    ctlabs_created : true
+    owner          : ctlabs_admin
+  spot: &default_spot
+    action : STOP
+    ttl    : 4 # in hours
+  disks: &default_disks
+    boot:
+  network:
+    net1-lan1: &net1_lan1 regions/us-east1/subnetworks/net1-lan1
+    net2-lan1: &net2_lan1 regions/us-east1/subnetworks/net2-lan1
+
+project:
+  name       : ${project}
+  id         : ${project}
+  fid        : ${folder}
+  billing    : ${billing}
+  sa_delete  : true
+  zone       : *default_zone
+  labels     :
+    <<  : *default_labels
+    vpc : standalone_project
+
+networks:
+  - name   : net1
+    subnets:
+      - name: net1-sub1
+        region : us-east1
+        cidr   : 192.168.45.0/24
+
+firewall:
+  net1:
+    ingress:
+      - name   : net1-ssh
+        ports  : [22]
+        src    : [35.235.240.0/20]
+      - name   : net1-openvpn-in
+        proto  : udp
+        ports  : [1194]
+        src    : [0.0.0.0/0]
+      - name   : net1-wireguard-in
+        proto  : udp
+        ports  : [51820]
+        src    : [0.0.0.0/0]
+      - name   : lan45-in
+        proto  : all
+        src    : [192.168.45.0/24, 192.168.10.0/24, 192.168.20.0/24]
+    egress:
+      - name   : net1-deny-all
+        proto  : all
+        dst    : [0.0.0.0/0]
+        prio   : 5000
+        action : deny
+        #tags   : [out-deny-all-any]
+        desc   : deny all outgoing traffic
+      - name   : net1-default-tcp
+        ports  : [22,53,80,443]
+        dst    : [0.0.0.0/0]
+      - name   : net1-default-udp
+        proto  : udp
+        ports  : [53,123,1194]
+        dst    : [0.0.0.0/0]
+      - name   : net1-default-icmp
+        proto  : icmp
+        dst    : [0.0.0.0/0]
+      - name   : lan45-out
+        proto  : all
+        dst    : [192.168.45.0/24, 192.168.10.0/24, 192.168.20.0/24]
+
+
+vms:
+  - name     : vm3
+    domain   : gcp.ctlabs.internal
+    type     : e2-micro
+    zone     : *default_zone
+    #image    : centos-stream-9-v20240213
+    image    : debian-12-bookworm-v20260310
+    ssh_keys : |
+      {{ ssh_keys }} 
+    #image   : debian-11-bullseye-v20240213
+    network  : net1-sub1
+    restart  : true
+    spot     : *default_spot
+    nat      : true
+    disks    :
+      <<: *default_disks
+      vg-data:
+        size: 10
+        type: pd-standard
+    labels   :
+      <<    : *default_labels
+      ctlabs: service_account_given
+  - name     : vm1
+    domain   : gcp.ctlabs.internal
+    type     : e2-micro
+    zone     : *default_zone
+    #image    : centos-stream-9-v20240213
+    image    : debian-12-bookworm-v20260310
+    ssh_keys : |
+      {{ ssh_keys }} 
+    #image   : debian-11-bullseye-v20240213
+    network  : net1-sub1
+    restart  : true
+    spot     : *default_spot
+    nat      : true
+    disks    :
+      <<: *default_disks
+      vg-data:
+        size: 10
+        type: pd-standard
+    labels   :
+      <<    : *default_labels
+      ctlabs: service_account_given
+  - name     : vm2
+    domain   : gcp.ctlabs.internal
+    type     : e2-micro
+    zone     : *default_zone
+    image    : debian-12-bookworm-v20260310
+    ssh_keys : |
+      {{ ssh_keys }} 
+    #image   : debian-11-bullseye-v20240213
+    network  : net1-sub1
+    restart  : true
+    spot     : *default_spot
+    nat      : true
+    disks    :
+      <<: *default_disks
+      vg-data:
+        size: 10
+        type: pd-standard
+    labels   :
+      <<    : *default_labels
+      ctlabs: service_account_given

@@ -13,6 +13,22 @@ locals {
       "iam.googleapis.com",
       "cloudresourcemanager.googleapis.com"
     ]
+    format_iam_uri = {
+      for rule in var.project.iam.deny_rules : rule.id => {
+        denied = [
+          for p in rule.denied_principals : 
+            p.type == "set"  ? "principalSet://goog/${p.id}" :
+            p.type == "group" ? "principalSet://goog/group/${p.id}" :
+            "principal://iam.googleapis.com/projects/-/serviceAccounts/${p.id}"
+        ]
+        exceptions = [
+          for e in try(rule.exceptions, []) :
+            e.type == "set"  ? "principalSet://goog/${e.id}" :
+            e.type == "group" ? "principalSet://goog/group/${e.id}" :
+            "principal://iam.googleapis.com/projects/-/serviceAccounts/${e.id}"
+        ]
+      }
+    }
   }
 
   project_name = coalesce(var.project.name, var.project.id)
@@ -124,4 +140,27 @@ resource "google_project_iam_binding" "binding" {
   members = [for member in each.value.members : member]
 
   depends_on = [google_project_iam_custom_role.role, google_service_account.sa]
+}
+
+# -----------------------------------------------------------------------------
+# IAM - Project-Level Deny Rules
+# -----------------------------------------------------------------------------
+resource "google_iam_deny_policy" "deny_rules" {
+  for_each = { for r in var.project.iam.deny_rules : r.id => r }
+
+  parent       = urlencode("cloudresourcemanager.googleapis.com/projects/${local.project_id}")
+  name         = "deny-${each.key}"
+  
+  rules {
+    deny_rule {
+      denied_permissions = each.value.perms
+      denied_principals  = local.format_iam_uri[each.key].denied
+      
+      # We automatically inject the "Safe" project SA exception alongside their YAML exceptions
+      exception_principals = distinct(concat(
+        local.format_iam_uri[each.key].exceptions,
+        ["principalSet://goog/projects/${google_project.project.number}/serviceAccounts"]
+      ))
+    }
+  }
 }
