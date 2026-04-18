@@ -12,7 +12,7 @@ terraform {
 }
 
 provider "netbox" {
-  server_url           = module.vault.ephemeral_secrets["netbox"].server_url
-  api_token            = module.vault.ephemeral_secrets["netbox"].api_token
-  allow_insecure_https = true
+  server_url           = module.vault.secrets["netbox"].server_url
+  api_token            = module.vault.secrets["netbox"].api_token
+  allow_insecure_https = try(!local.config.vault.tls_verify, false)
 }

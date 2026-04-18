@@ -7,7 +7,7 @@ locals { config = yamldecode( file("./config.yml") ) }
 
 module "vault" {
   source = "../"
-  #source = "github.com/oxdeca/ctlabs-terraform?ref=dev/modules/gcp/vault"
+  #source = "github.com/oxdeca/ctlabs-terraform//modules/gcp/vault?ref=dev"
 
   vault = local.config.vault
 }

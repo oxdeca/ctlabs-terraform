@@ -12,7 +12,7 @@ from   jinja2 import Environment, FileSystemLoader
 
 @pytest.fixture(scope="session")
 def plan(wd="."):
-  tf = Terraform()
+  tf = Terraform(use_vault=True)
 
   tf.init()
   return tf.plan()

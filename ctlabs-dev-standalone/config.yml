@@ -5,12 +5,6 @@
 # Description : default project configuration for gcp
 # -----------------------------------------------------------------------------
 
-vault:
-  secrets:
-    - name: project
-      path: dev/ctlabs-dev-standalone
-      type: data
-
 defaults:
   zone: &default_zone us-east1-c
   labels: &default_labels
@@ -26,15 +20,16 @@ defaults:
     net2-lan1: &net2_lan1 regions/us-east1/subnetworks/net2-lan1
 
 project:
-  name       : ${project}
-  id         : ${project}
+  name       : ctlabs-dev-standalone
+  id         : ctlabs-dev-standalone
   fid        : ${folder}
   billing    : ${billing}
   sa_delete  : true
   zone       : *default_zone
   labels     :
-    <<  : *default_labels
-    vpc : standalone_project
+    <<    : *default_labels
+    vpc   : standalone_project
+    ctlabs: service_account_given
 
 networks:
   - name   : net1
@@ -84,65 +79,50 @@ firewall:
 
 
 vms:
-  - name     : vm3
-    domain   : gcp.ctlabs.internal
-    type     : e2-micro
-    zone     : *default_zone
-    #image    : centos-stream-9-v20240213
-    image    : debian-12-bookworm-v20260310
-    ssh_keys : |
-      {{ ssh_keys }} 
-    #image   : debian-11-bullseye-v20240213
-    network  : net1-sub1
-    restart  : true
-    spot     : *default_spot
-    nat      : true
-    disks    :
-      <<: *default_disks
-      vg-data:
-        size: 10
-        type: pd-standard
-    labels   :
-      <<    : *default_labels
-      ctlabs: service_account_given
   - name     : vm1
     domain   : gcp.ctlabs.internal
     type     : e2-micro
     zone     : *default_zone
-    #image    : centos-stream-9-v20240213
     image    : debian-12-bookworm-v20260310
     ssh_keys : |
-      {{ ssh_keys }} 
-    #image   : debian-11-bullseye-v20240213
+      ${ssh_keys}
     network  : net1-sub1
     restart  : true
     spot     : *default_spot
     nat      : true
-    disks    :
+    disks    : 
       <<: *default_disks
       vg-data:
         size: 10
         type: pd-standard
-    labels   :
-      <<    : *default_labels
-      ctlabs: service_account_given
+    labels   : *default_labels
+
   - name     : vm2
     domain   : gcp.ctlabs.internal
     type     : e2-micro
     zone     : *default_zone
     image    : debian-12-bookworm-v20260310
     ssh_keys : |
-      {{ ssh_keys }} 
-    #image   : debian-11-bullseye-v20240213
+      ${ssh_keys}
     network  : net1-sub1
     restart  : true
     spot     : *default_spot
     nat      : true
-    disks    :
-      <<: *default_disks
-      vg-data:
-        size: 10
-        type: pd-standard
+    disks    : *default_disks
     labels   :
       <<    : *default_labels
-      ctlabs: service_account_given
+      os_family: debian
+
+  - name     : vm3
+    domain   : gcp.ctlabs.internal
+    type     : e2-micro
+    zone     : *default_zone
+    image    : debian-12-bookworm-v20260310
+    ssh_keys : |
+      ${ssh_keys}
+    network  : net1-sub1
+    restart  : true
+    spot     : *default_spot
+    nat      : true
+    disks    : *default_disks
+    labels   : *default_labels
