@@ -1,24 +1,62 @@
 # -----------------------------------------------------------------------------
 # File        : ctlabs-terraform/modules/gcp/project/variables.tf
 # Description : project module variables
-#               defaults are given in  main.tf as locals
 # -----------------------------------------------------------------------------
 
-#
-# required:
-#   - project.name
-#   - project.billing
-#   - either project.oid or project.fid
-#   - if project.vpc_type == 'shared': project.shared_vpc 
-# 
-# defaults given:
-#   - project.vpc_type
-#   - project.sa_delete
-#
-# optional:
-#   - project.id (defaults to project.name if not given)
-#   - project.labels
-#   - prroject.delete_policy
-#   - project.create_network
+variable project {
+  type = object({
+    id             = string                         # (*) project id
+    billing        = string                         # (*) billing account
+    name           = optional(string)               # (?) project name (defaults to project.id if not set)
+    oid            = optional(string)               # (|) organization id (either oid or fid MUST be set)
+    fid            = optional(string)               # (|) folder id
+    zone           = optional(string)               # (?) gcp region.zone
+    labels         = optional(map(string))          # (?) labels
+    type           = optional(string, "standalone") # (?) standalone, host, service
+    host_project   = optional(string)               # (?) host_project; only needed for type == service
+    sa_delete      = optional(bool, true)           # (?) delete the default service account
+    delete_policy  = optional(string, "ABANDON")    # (?) delete policy, ABANDON, PREVENT, or DELETE
+    create_network = optional(bool, false)          # (?) create default network
+    services       = optional(list(string), [])     # (?) enable apis
+    service_accounts = optional(list(object({       # (?) add service accounts to project
+      id   = optional(string)
+      name = optional(string)
+      desc = optional(string)
+    })), [])
+    iam = optional(object({
+      roles = optional(list(object({                # (?) create custom roles
+        id    = optional(string)
+        title = optional(string)
+        perms = optional(list(string))
+        desc  = optional(string)
+      })), [])
+      bindings = optional(list(object({             # (?) add project-level bindings
+        role    = optional(string)
+        members = optional(list(string))
+      })), [])
+      deny_rules = optional(list(object({
+        id                = string
+        title             = optional(string)
+        desc              = optional(string)
+        perms             = list(string)
+        denied_principals = list(string)
+        exceptions        = optional(list(string), [])
+      })), [])
+    }), {})
+  })
 
-variable project { type = any }
+  validation {
+    condition     = contains(["standalone", "host", "service"], var.project.type)
+    error_message = "The project type must by one of 'standalone', 'host', or 'service'."
+  }
+
+  validation {
+    condition     = contains(["ABANDON", "PREVENT", "DELETE"], var.project.delete_policy)
+    error_message = "The 'policy' attribute must be one of 'ABANDON', 'PREVENT', or 'DELETE'."
+  }
+
+  validation {
+    condition     = var.project.type != "service" || (var.project.host_project != null && var.project.host_project != "")
+    error_message = "If 'type' is 'service' the 'host_project' attribute must be set."
+  }
+}

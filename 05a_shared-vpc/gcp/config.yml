@@ -62,11 +62,13 @@ dns:
 network:
   - name : net1
   - name : net2
+  - name : net3
 
 subnet:
   net1:
-    - name : net1-lan1
-      cidr : 172.25.70.0/24
+    - name           : net1-lan1
+      cidr           : 172.25.70.0/24
+      private_access : true
   net2:
     - name : net2-lan1
       cidr : 172.25.71.0/24
@@ -76,11 +78,13 @@ firewall:
     ingress:
       - name   : net1-ssh-iap
         ports  : [22]
-        src    : [35.235.240.0/20]
+        src    : [35.235.240.0/20,99.246.42.18/32]
 
       - name   : net1-ctlabs-in
-        ports  : [80,443,3000,4567,8080,8081,8082,8090,8200,8300,8443]
+        ports  : [80,443,1106,2206,3000,4567,8080,8081,8082,8083,8084,8090,8200,8300,8443]
         src    : [0.0.0.0/0]
+        tags   : [in-allow-vm-http]
+        desc   : CTLABS-12345 - http,https
 
     egress:
       - name   : net1-deny-all
@@ -88,6 +92,8 @@ firewall:
         dst    : [0.0.0.0/0]
         prio   : 5000
         action : deny
+        #tags   : [out-deny-all-any]
+        desc   : deny all outgoing traffic
 
       - name   : net1-default-tcp
         ports  : [22,53,80,443,8200]
@@ -128,8 +134,18 @@ firewall:
         proto  : icmp
         dst    : [0.0.0.0/0]
 
-#buckets:
-#  - name     : tf-state
-#    location : us-east1
-#    destroy  : true
-#    labels   : *default_labels
+buckets:
+  yum:
+    location : us-east1
+    destroy  : true
+    labels   : *default_labels
+
+  web:
+    location : us-east1
+    private  : false
+    labels   : *default_labels
+
+  tfstate:
+    location : us-east1
+    destroy  : true
+    labels   : *default_labels

@@ -1,0 +1,15 @@
+---
+
+# -----------------------------------------------------------------------------
+# File    : ctlabs-terraform/modules/gcp/vault/test/config.yml
+# License : MIT
+# -----------------------------------------------------------------------------
+
+vault:
+  secrets:
+    - name: vsphere
+      path: dev/pleng/vsphere
+      type: ephemeral
+    - name: netbox
+      path: dev/pleng/netbox
+      type: ephemeral

@@ -53,20 +53,22 @@ services:
 service_accounts:
   - id  : vault-service-account
     name: VaulServiceAccount
+    key : false
 
-iam_roles:
-  - id    : VaultServiceRole
-    title : VaultServiceRole
-    perms : 
-      - iam.serviceAccounts.get
-      - iam.serviceAccountKeys.get
-      - iam.serviceAccounts.signJwt
-      - compute.instances.get
-      - compute.instanceGroups.list
+#iam_roles:
+#  - id    : VaultServiceRole
+#    title : VaultServiceRole
+#    perms : 
+#      - iam.serviceAccounts.get
+#      - iam.serviceAccountKeys.get
+#      - iam.serviceAccounts.signJwt
+#      - compute.instances.get
+#      - compute.instanceGroups.list
 
 iam_bindings:
   - role   : VaultServiceRole
-    level  : project
+    level  : organization
+#    level  : project
     members:
       - "serviceAccount:vault-service-account"
 
@@ -76,22 +78,35 @@ buckets:
     destroy  : true
     labels   : *default_labels
 
+composer:
+  envs: []
+#    - name    : env1
+#      image   : composer-3-airflow-2.10.5-build.14
+#      network : projects/ctlabs-0815-123abc-05a-03/global/networks/net1
+#      subnet  : projects/ctlabs-0815-123abc-05a-03/regions/us-east1/subnetworks/net1-lan1
+#      podnet  : pod-range
+#      svcnet  : svc-range
+#    - name    : env2
+#      image   : composer-2-airflow-2.10.5
+#      network : projects/ctlabs-0815-123abc-05a-03/global/networks/net2
+#      subnet  : projects/ctlabs-0815-123abc-05a-03/regions/us-east1/subnetworks/net2-lan1
+
 vms:
-  - name     : vm-1
-    domain   : ctlabs.internal
-    type     : e2-micro
-    image    : centos-stream-9-v20240213
-    #image   : debian-11-bullseye-v20240213
-    net      : *net1_lan1
-    #script   : ./ppvm.sh
-    spot     : *default_spot
-    nat      : true
-    disks    : 
-      <<: *default_disks
-      vg-data:
-    labels   :
-      <<    : *default_labels
-      ctlabs: service_account_given
+#  - name     : vm-4
+#    domain   : ctlabs.internal
+#    type     : e2-micro
+#    image    : centos-stream-9-v20240213
+#    #image   : debian-11-bullseye-v20240213
+#    net      : *net1_lan1
+#    #script   : ./ppvm.sh
+#    spot     : *default_spot
+#    nat      : true
+#    disks    : 
+#      <<: *default_disks
+#      vg-data:
+#    labels   :
+#      <<    : *default_labels
+#      ctlabs: service_account_given
 
   - name     : vm-2
     domain   : ctlabs.internal
@@ -106,55 +121,70 @@ vms:
     labels   :
       <<    : *default_labels
       ctlabs: no_service_account
+    metadata :
+      block-project-ssh-keys: true
+      ssh-keys: |
+        ctlabs:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG67Ke7vpJv+bNlnHCpe4PDRlhzxvCwNf3pmC4l/+eeO root@c9-2.ctlabs.acedxo.com
 
-  - name     : vm-3
-    domain   : ctlabs.internal
-    type     : e2-micro
-    #image    : centos-stream-9-v20240213
-    image    : debian-12-bookworm-v20240910
-    net      : *net2_lan1
-    nat      : true
-    spot     : *default_spot
-    disks    : *default_disks
-    labels   :
-      <<    : *default_labels
-      ctlabs: no_service_account
+#  - name     : vm-3
+#    domain   : ctlabs.internal
+#    type     : e2-micro
+#    #image    : centos-stream-9-v20240213
+#    image    : debian-12-bookworm-v20240910
+#    net      : *net2_lan1
+#    nat      : true
+#    spot     : *default_spot
+#    disks    : *default_disks
+#    labels   :
+#      <<    : *default_labels
+#      ctlabs: no_service_account
 
-bigquery:
-  # ---------------------------------------------------------------------------
-  # DATASET basic_bq
-  # ---------------------------------------------------------------------------
-  basic_bq:
-    friendly: foo
-    destroy: true
-    location: us-east1
-    access:
-      - role: roles/bigquery.user
-        members:
-          - "group:devs@acedxo.com"
-      - role: roles/bigquery.dataViewer
-        members:
-          - "group:finance-and-accounting@acedxo.com"
-          - "group:devs@acedxo.com"
-    labels: 
-      <<   : *default_labels
-      owner: dba
-    tables:
-      - name: bar
-        access:
-          - role: roles/bigquery.dataViewer
-            members:
-              - "group:new-group@acedxo.com"
+#wbs:
+#  - name : wb1
+#    type : e2-standard-2
+#    nics :
+#      - network  : https://www.googleapis.com/compute/v1/projects/ctlabs-0815-123abc-05a-03/global/networks/net1
+#        subnet   : projects/ctlabs-0815-123abc-05a-03/regions/us-east1/subnetworks/net1-lan1
+#        nic_type : GVNIC
+#  - name : wb2
 
-        labels:
-          env      : devops
-          billable : true
-          owner    : janesmith
-        schema:
-          - { name: fullVisitorId,  type: STRING, mode: REQUIRED }
-          - { name: visitNumber,    type: INTEGER }
-          - { name: visitId,        type: INTEGER }
-          - { name: visitStartTime, type: INTEGER }
-          - { name: fullDate,       type: DATE    }
-        constraints:
-          primary_key: [ fullVisitorId ]
+#bigquery:
+#  # ---------------------------------------------------------------------------
+#  # DATASET basic_bq
+#  # ---------------------------------------------------------------------------
+#  basic_bq:
+#    friendly: foo
+#    destroy: true
+#    location: us-east1
+#    access:
+#      - role: roles/bigquery.user
+#        members:
+#          - "group:devs@acedxo.com"
+#      - role: roles/bigquery.dataViewer
+#        members:
+#          - "group:finance-and-accounting@acedxo.com"
+#          - "group:devs@acedxo.com"
+#    labels: 
+#      <<   : *default_labels
+#      owner: dba
+#    tables:
+#      - name: bar
+#        access:
+#          - role: roles/bigquery.dataViewer
+#            members:
+#              - "group:new-group@acedxo.com"
+#
+#        labels:
+#          env      : devops
+#          billable : true
+#          owner    : janesmith
+#        schema:
+#          - { name: fullVisitorId,  type: STRING, mode: REQUIRED }
+#          - { name: visitNumber,    type: INTEGER }
+#          - { name: visitId,        type: INTEGER }
+#          - { name: visitStartTime, type: INTEGER }
+#          - { name: fullDate,       type: DATE    }
+#        constraints:
+#          primary_key: [ fullVisitorId ]
+#
+

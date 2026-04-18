@@ -5,111 +5,70 @@
 
 locals {
   defaults = {
-    "disk" = { 
-      "fstype"   = "xfs"
-      "opts"     = "defaults"
-      "path"     = "/mnt"
-      "type"     = "pd-ssd" 
-      "size"     = "20" 
-      "mode"     = "READ_WRITE"
-      "detached" = false
-    },
-    "spot" = { 
-      "lifespan" = 8,# in hours
-      "action"   = "STOP" 
-    },
-    "dns" = {
-      "ttl" = 600,
+    labels = {
+      module = "ctlabs-terraform-module-gcp-vm"
     }
-    "type"       = "e2-micro",
-    "oslogin"    = false,
-    "nat"        = false,
-    "nested"     = false,
-    "vtpm"       = true
-    "protected"  = false,
-    "update"     = true,
-    "sa_prefix"  = "gce-",
-    "sa_postfix" = "@${var.project.id}.iam.gserviceaccount.com",
+    sa_prefix = "gce-"
+    disks = {
+      boot = {
+        size   = 20
+        path   = "/"
+        fstype = "xfs"
+        type   = "pd-standard"
+      }
+    }
   }
-  disks = flatten( [ for vm in var.vms : [ for dk, dv in vm.disks : merge( { vm_id = vm.name, disk_id = dk, name = startswith(dk, "disk:") ? split(":", dk)[1] : "${vm.name}-${dk}", detached = try(dv.detached, local.defaults.disk.detached ) }, dv ) ] ] )
+
+  blk_fs    = ["xfs", "ext4", "ntfs"]
+  blk_disks = flatten([for vm in var.vms : [for dk, dv in merge( local.defaults.disks, vm.disks) : merge({ vm_id = vm.name, disk_id = dk, zone = vm.zone }, dv) if contains(local.blk_fs, try(dv.fstype, ""))]])
+  buckets   = flatten([for vm in var.vms : [for dk, dv in try(vm.disks, {}) : merge({ vm_id = vm.name, disk_id = dk, zone = vm.zone }, dv) if try(dv.stype, null) == "bucket"]])
 }
+
+# -----------------------------------------------------------------------------
+# Service Accounts
+# -----------------------------------------------------------------------------
 
 resource "google_service_account" "sa" {
   for_each = { for vm in var.vms : vm.name => vm }
 
+  project      = var.project.id
   account_id   = "${local.defaults.sa_prefix}${each.value.name}"
-  display_name = try( each.value.name, null )
-  description  = try( each.value.desc, null )
+  display_name = try(each.value.name, null)
+  description  = try(each.value.desc, null)
 }
 
-resource "google_compute_disk" "attached" {
-  for_each = { for disk in local.disks : disk.name => disk if !startswith( disk.disk_id, "boot" ) } 
-  name     = each.key
-  type     = try( each.value.type, local.defaults.disk["type"] )
-  size     = try( each.value.size, local.defaults.disk["size"] )
-  labels   = try( each.value.labels, {} )
+# -----------------------------------------------------------------------------
+# Disks
+# -----------------------------------------------------------------------------
 
-  # as removing/changing a disk configurations isn't expected to happen often and
-  # because a disk configuration change(rename, reduce size) recreates a disk 
-  # attached disks are protected by having 'lifecycle.prevent_destroy' set to true (see google_comput_disk resource above)
-  # i.e. adding disks can be done with this module, but changes/deletes need to be done manually (or by setting below lifecycle.prevent_destroy = false)
-  # 
-  # Thus changing/removing disks is a manual task that would work as follows:
-  # 1. add a new disk
-  # 2. copy the data from the old disk to the new one (if needed)
-  # 3. make sure the disks isn't used by the OS anymore or deconfigure it on the OS-level
-  # 4. umount disk in the OS
-  # 5. remove the old disk from the terraform configuration
-  # 6. run terraform to update its state
+resource "google_compute_disk" "disks" {
+  for_each = { for disk in local.blk_disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith(disk.disk_id, "boot") }
+
+  project = var.project.id
+  name    = "${each.value.vm_id}-${each.value.disk_id}"
+  type    = each.value.type
+  size    = each.value.size
+  zone    = each.value.zone
+  labels  = merge(local.defaults.labels, try(each.value.labels, {}))
+
   lifecycle {
     prevent_destroy = false
   }
 }
 
-# --------------------------------
-# Ansible Token
-# --------------------------------
+resource "google_compute_attached_disk" "attached_disks" {
+  for_each = { for disk in local.blk_disks : "${disk.vm_id}-${disk.disk_id}" => disk if !startswith(disk.disk_id, "boot") }
 
-#provider "vault" {
-#  address = try( var.vault.addr, "" )
-#  token   = try( var.vault.token, "" )
-#}
-#
-#resource "vault_policy" "sssd" {
-#  name   = "vp_sssd"
-#  policy = <<EOT
-#path "kv/data/sssd" {
-#  capabilities = ["read"]
-#}
-#EOT
-#}
-#
-#resource "vault_token_auth_backend_role" "gcepp" {
-#  role_name           = "vr_vm"
-#  allowed_policies    = ["vp_sssd"]
-#  disallowed_policies = ["default"]
-#  token_ttl           = 600
-#  token_type          = "service"
-#}
-#
-#resource "vault_token" "ansible" {
-#  #count = var.create_token ? 1 : 0
-#
-#  role_name = "vr_vm"
-#  policies  = ["vp_sssd"]
-#  renewable = false
-#  num_uses  = 1
-#  ttl       = "10m"
-#
-#  metadata = {
-#    "purpose" = "ansible"
-#  }
-#}
+  project     = var.project.id
+  device_name = google_compute_disk.disks[each.key].name
+  disk        = google_compute_disk.disks[each.key].id
+  instance    = google_compute_instance.vm[each.value.vm_id].id
+}
 
 
-# ---
-# VM
-# ---
+# -----------------------------------------------------------------------------
+# Virtual Machines
+# -----------------------------------------------------------------------------
 
 resource "google_compute_instance" "vm" {
   provider = google-beta
@@ -118,146 +77,104 @@ resource "google_compute_instance" "vm" {
 
   project                   = var.project.id
   name                      = each.value.name
-  hostname                  = try( "${each.value.name}.${each.value.domain}", null )
-  machine_type              = try( each.value.type, local.defaults.type )
-  allow_stopping_for_update = try( each.value.update, local.defaults.update )
-  deletion_protection       = try( each.value.protected, local.defaults.protected )
-  labels                    = try( each.value.labels, {} )
-  tags                      = try( each.value.tags, [] )
+  hostname                  = (each.value.domain != null ? "${each.value.name}.${each.value.domain}" : null)
+  machine_type              = each.value.type
+  zone                      = each.value.zone
+  allow_stopping_for_update = each.value.restart
+  deletion_protection       = each.value.protected
+  labels                    = merge(local.defaults.labels, try(each.value.labels, {}))
+  tags                      = distinct(try(each.value.tags, []))
 
   boot_disk {
-    device_name  = "${each.value.name}-boot"
+    device_name = "${each.value.name}-boot"
     initialize_params {
       image = each.value.image
-      type  = try( each.value.disks.boot.type, null )
-      size  = try( each.value.disks.boot.size, null )
+      type  = try( each.value.disks.boot.type, local.defaults.disks.boot.type )
+      size  = try( each.value.disks.boot.size, local.defaults.disks.boot.size )
     }
   }
 
-  dynamic attached_disk {
-    for_each = { for dk,dv in each.value.disks: startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}" => dv if !startswith( dk, "boot" ) && ! try(dv.detached, local.defaults.disk.detached) }
-    content {
-      device_name = attached_disk.key
-      source      = attached_disk.key
-      mode        = try( attached_disk.value.mode, local.defaults.disk.mode )
-    }
-  } 
-
   lifecycle {
-    ignore_changes = [metadata_startup_script]
+    ignore_changes = [metadata.startup_script, attached_disk, metadata.ssh-keys]
   }
 
   network_interface {
-    subnetwork = try( var.project.vpc_type, "") == "service" ? "projects/${var.project.shared_vpc}/${each.value.net}" : each.value.net
-    network_ip = try( each.value.ipv4, null )
+    subnetwork         = each.value.network
+    subnetwork_project = try(var.project.host_project, var.project.id)
+    network_ip         = each.value.ipv4
 
-    dynamic access_config {
-      for_each = try( each.value.nat, local.defaults.nat ) ? toset([1]) : toset([])
+    dynamic "access_config" {
+      for_each = each.value.nat ? toset([each.key]) : toset([])
       content {
+        nat_ip = google_compute_address.nat_ip[each.key].address
       }
     }
+
   }
 
   advanced_machine_features {
-    enable_nested_virtualization = try( each.value.nested, local.defaults.nested )
+    enable_nested_virtualization = each.value.nested
   }
 
   shielded_instance_config {
-    enable_vtpm = try( each.value.vtpm, local.defaults.vtpm )
+    enable_vtpm = each.value.vtpm
   }
 
-  metadata = merge(
-    {
-      enable-oslogin    = try( each.value.oslogin, local.defaults.oslogin )
-      startup-script    = try( file("${each.value.script}"), "" )
-      #ansible_token     = try( vault_token.ansible.client_token, "" )
-      ctlabs_base_disks =  jsonencode( try(
-        [ for dk,dv in each.value.disks :
-          {
-            name   = startswith(dk, "disk:") ? split(":", dk)[1] : "${each.value.name}-${dk}"
-            fstype = try(dv.fstype, local.defaults.disk.fstype),
-            opts   = try(dv.opts,   local.defaults.disk.opts),
-            path   = try(dv.path,   local.defaults.disk.path),
-          } if !startswith(dk, "boot") && ! try(dv.detached, local.defaults.disk.detached) # && [ for k,v in dv : v if k == "path" && v != null ] != []
-        ]
-      , null) )
-    }, 
-    try( each.value.metadata, {} ) 
-  )
-
-  dynamic service_account {
-    for_each = try(each.value.name, null) != null ? toset([1]) : toset([])
-    content {
-      email  = try( each.value.service_account.email, "${local.defaults.sa_prefix}${each.value.name}${local.defaults.sa_postfix}" )
-      scopes = concat( ["cloud-platform"], try( each.value.service_account.scopes, [] ))
-    }
+  metadata = strcontains(each.value.image, "windows") ? {
+    startup-script    = file("${path.module}/scripts/windows.ps1")
+    ctlabs_base_disks = jsonencode([for dk, dv in merge(local.defaults.disks, try(each.value.disks, {})) : merge({ name = "${each.value.name}-${dk}" }, dv) if !startswith(dk, "boot")])
+    labels            = jsonencode(merge(local.defaults.labels, try(each.value.labels, {})))
+    } : {
+    enable-oslogin    = each.value.oslogin
+    startup-script    = file("${path.module}/scripts/linux.sh")
+    ctlabs_base_disks = jsonencode([for dk, dv in merge(local.defaults.disks, try(each.value.disks, {})) : merge({ name = try(dv.type, null) == "bucket" ? dk : "${each.value.name}-${dk}", fstype = dv.fstype }, dv) if !startswith(dk, "boot")])
+    ssh-keys          = each.value.ssh_keys
+    labels            = jsonencode(merge(local.defaults.labels, try(each.value.labels, {})))
   }
 
-  dynamic scheduling {
-    for_each = try( each.value.spot, null ) != null ? toset([1]) : toset([])
+  service_account {
+    email  = google_service_account.sa[each.value.name].email
+    scopes = concat(["cloud-platform"], try(each.value.service_account.scopes, []))
+  }
+
+  dynamic "scheduling" {
+
+    for_each = try(each.value.spot, null) != null ? toset([1]) : toset([])
     content {
       preemptible                 = true
       automatic_restart           = false
       provisioning_model          = "SPOT"
-      instance_termination_action = try( each.value.spot.action, local.defaults.spot.action )
+      instance_termination_action = each.value.spot.action
 
       max_run_duration {
-        seconds = try( each.value.spot.lifespan * 3600, local.defaults.spot.lifespan * 3600 )
+        seconds = each.value.spot.ttl * 3600
       }
     }
   }
-
-  depends_on = [google_compute_disk.attached]
 }
 
+# -----------------------------------------------------------------------------
+# NAT
+# -----------------------------------------------------------------------------
+resource "google_compute_address" "nat_ip" {
+  for_each     = { for vm in var.vms : vm.name => vm if vm.nat }
+  name         = each.key
+  project      = var.project.id
+  region       = replace(each.value.zone, "/-[a-z]$/", "")
+  address_type = "EXTERNAL"
+  labels       = merge(local.defaults.labels, try(each.value.labels, {}))
+}
+
+# -----------------------------------------------------------------------------
+# DNS
+# -----------------------------------------------------------------------------
 resource "google_dns_record_set" "rr" {
-  for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
+  for_each = { for vm in var.vms : vm.name => vm if vm.domain != null }
 
-  managed_zone = replace( each.value.domain, ".", "-" )
+  managed_zone = replace(each.value.domain, ".", "-")
   name         = "${each.value.name}.${each.value.domain}."
-  project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
+  project      = try( var.project.host_project, var.project.id )
   type         = "A"
-  ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
-  rrdatas      = [google_compute_instance.vm[each.key].network_interface.0.network_ip]
-
-  depends_on = [google_compute_instance.vm]
-}
-
-#
-# atm, this works only for /24 prefix, and is too complicated
-# i.e. ip = a.b.c.d 
-# reverse zone = c.b.a.in-addr.arpa
-#
-#resource "google_dns_record_set" "ptr" {
-#  for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
-#
-#  managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
-#  name         = join("", concat( slice( reverse( split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip) ), 0, 1 ), concat( ["."], [join( ".", concat( reverse( slice( split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3 ) ), ["in-addr.arpa."] ) )] ) ) )
-#  project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
-#  type         = "PTR"
-#  ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
-#  rrdatas      = ["${each.value.name}.${each.value.domain}."]
-#
-#  depends_on = [google_compute_instance.vm]
-#}
-
-#resource "null_resource" "cost_estimation1" {
-#  provisioner "local-exec" {
-#    command = "echo 'For Cost Estimation check: https://cloudbilling.googleapis.com/v2beta/services'"
-#  }
-#}
-
-
-resource "google_dns_record_set" "ptr" {
-  for_each = { for vm in var.vms : vm.name => vm if try(vm.domain, null) != null }
-
-  #managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, ceil( tonumber( split("/", google_compute_instance.vm[each.key].network_interface.0.network_ip)[1] ) / 8 )))))
-  managed_zone = join("-", concat(["reverse"], reverse(slice(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip), 0, 3))))
-  name         = join(".", reverse(split(".", google_compute_instance.vm[each.key].network_interface.0.network_ip)), ["in-addr.arpa."])
-  project      = try( var.project.vpc_type, null ) == "service" ? var.project.shared_vpc : var.project.id
-  type         = "PTR"
-  ttl          = try( each.value.dns.ttl, local.defaults.dns.ttl)
-  rrdatas      = ["${each.value.name}.${each.value.domain}."]
-  
-  depends_on = [google_compute_instance.vm]
+  ttl          = each.value.dns.ttl
+  rrdatas      = [google_compute_instance.vm[each.key].network_interface[0].network_ip]
 }
