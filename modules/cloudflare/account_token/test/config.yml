@@ -1,0 +1,30 @@
+---
+
+# -----------------------------------------------------------------------------
+# File        : ctlabs-terraform/cloudflare/config.yml
+# Description : main configuration 
+# -----------------------------------------------------------------------------
+
+account:
+  id     : ${id}
+  zone_id: ${zone_id}
+  tokens:
+    - name : dns-auto-manager
+      scope: zone
+      perms:
+        - DNS Write
+        - DNS Read
+    - name : dns-admin
+      scope: account
+      perms:
+        - Account Analytics Read
+        - Account DNS Settings Read
+    - name : m2m_token
+      scope: zone
+      perms:
+        - DNS Write
+        - DNS Read
+    - name  : mein token
+      scope : account
+      perms :
+        - "Access: Organizations Read"
