@@ -1,13 +1,16 @@
 # -----------------------------------------------------------------------------
-# File: ctlabs-terraform/gke/test/config.yml
+# File: ctlabs-terraform/modules/gcp/gke/test/config.yml
 # -----------------------------------------------------------------------------
 
 gke:
   project   : ctlabs-prj-2025101601
   location  : us-central1-a
   name      : dev-cluster-01
-  network   : default
-  subnetwork: default
+  network   : vault-test-vpc
+  subnetwork: vault-test-subnet
+  pods_range_name: pods
+  svcs_range_name: svcs
+
   node_pools:
     - name        : system-pool
       machine_type: e2-medium
@@ -24,3 +27,21 @@ gke:
       node_count  : 1
       disk_size_gb: 50
       image_type  : WINDOWS_LTSC_CONTAINERD
+      windows_os_version: OS_VERSION_LTSC2022
+
+vpc:
+  - name          : vault-test-vpc
+    desc          : VPC for GKE test cluster
+    auto_subnets  : false
+    routing       : REGIONAL
+    mtu           : 1460
+    subnets:
+      - name          : vault-test-subnet
+        region        : us-central1
+        cidr          : 10.0.0.0/24
+        private_access: true
+        ranges:
+          - name: pods
+            cidr: 10.1.0.0/16
+          - name: svcs
+            cidr: 10.2.0.0/20
