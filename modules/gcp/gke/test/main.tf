@@ -8,7 +8,7 @@ locals {
 }
 
 module "gke" {
-  source = "../../modules/gcp/gke"
+  source = "../"
 
   gke = local.config.gke
 }

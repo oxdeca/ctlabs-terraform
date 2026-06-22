@@ -12,7 +12,6 @@ variable "gke" {
     subnetwork          = optional(string, "default")
     autopilot           = optional(bool, false)
     deletion_protection = optional(bool, false)
-    services            = optional(list(string), []) 
     pods_range_name     = optional(string)
     svcs_range_name     = optional(string)
     master_cidr         = optional(string)
@@ -25,6 +24,7 @@ variable "gke" {
       disk_size_gb      = optional(number, 20)
       disk_type         = optional(string, "pd-standard")
       max_pods_per_node = optional(number, 32)
+      image_type        = optional(string, "COS_CONTAINERD")
     })), [
       {
         name         = "default-pool"
@@ -32,6 +32,7 @@ variable "gke" {
         node_count   = 1
         disk_size_gb = 20
         disk_type    = "pd-standard"
+        image_type   = "COS_CONTAINERD"
       }
     ])
   })

@@ -9,13 +9,17 @@ locals {
     }
     sa_prefix = "gke-"
   }
+  services = [
+    "container.googleapis.com",
+    "compute.googleapis.com",
+  ]
 }
 
 module "services" {
   source = "../services"
 
-  services = var.gke.services
-  project  = var.gke.project
+  services = local.services
+  project  = { id = var.gke.project }
 }
 
 # -----------------------------------------------------------------------------
@@ -33,16 +37,16 @@ resource "google_service_account" "sa" {
 # GKE Control Plane (Cluster)
 # -----------------------------------------------------------------------------
 resource "google_container_cluster" "primary" {
-  name                     = var.gke.name
-  location                 = var.gke.location
-  project                  = var.gke.project
-  network                  = var.gke.network
-  subnetwork               = var.gke.subnetwork
-  enable_autopilot         = var.gke.autopilot ? true : null
-  remove_default_node_pool = var.gke.autopilot ? null : true
-  initial_node_count       = var.gke.autopilot ? null : 1
-  deletion_protection      = var.gke.deletion_protection
+  name                      = var.gke.name
+  location                  = var.gke.location
+  project                   = var.gke.project
+  network                   = var.gke.network
+  subnetwork                = var.gke.subnetwork
+  enable_autopilot          = var.gke.autopilot ? true : null
+  remove_default_node_pool  = var.gke.autopilot ? null : true
+  initial_node_count        = var.gke.autopilot ? null : 1
   default_max_pods_per_node = var.gke.autopilot ? null : 32
+  deletion_protection       = var.gke.deletion_protection
 
   timeouts {
     create = "30m"
@@ -93,9 +97,10 @@ resource "google_container_node_pool" "pools" {
 
   node_config {
     service_account = google_service_account.sa.email
-    machine_type = each.value.machine_type
-    disk_size_gb = each.value.disk_size_gb
-    disk_type    = each.value.disk_type
+    machine_type    = each.value.machine_type
+    disk_size_gb    = each.value.disk_size_gb
+    disk_type       = each.value.disk_type
+    image_type      = each.value.image_type
   }
 }
 

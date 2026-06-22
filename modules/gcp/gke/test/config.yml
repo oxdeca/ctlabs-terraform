@@ -3,19 +3,24 @@
 # -----------------------------------------------------------------------------
 
 gke:
-  project: ctlabs-prj-2025101601
-  services:
-    - container.googleapis.com
-  location: us-central1-a
-  name: dev-cluster-01
-  network: default
+  project   : ctlabs-prj-2025101601
+  location  : us-central1-a
+  name      : dev-cluster-01
+  network   : default
   subnetwork: default
   node_pools:
-    - name: system-pool
+    - name        : system-pool
       machine_type: e2-medium
-      node_count: 1
+      node_count  : 1
       disk_size_gb: 20
-    - name: apps-pool
+
+    - name        : apps-pool
       machine_type: e2-standard-2
-      node_count: 2
+      node_count  : 2
       disk_size_gb: 50
+
+    - name        : win-pool
+      machine_type: e2-standard-2
+      node_count  : 1
+      disk_size_gb: 50
+      image_type  : WINDOWS_LTSC_CONTAINERD
