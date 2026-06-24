@@ -14,7 +14,11 @@ variable "gke" {
     deletion_protection = optional(bool, false)
     pods_range_name     = optional(string)
     svcs_range_name     = optional(string)
-    master_cidr         = optional(string)
+    private_cluster = optional(object({
+      master_cidr             = string
+      enable_private_endpoint = optional(bool, false)
+      master_global_access    = optional(bool, false)
+    }))
 
     # Node Pool Definitions
     node_pools = optional(list(object({

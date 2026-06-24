@@ -67,9 +67,9 @@ resource "google_container_cluster" "primary" {
   deletion_protection       = var.gke.deletion_protection
 
   timeouts {
-    create = "30m"
-    update = "30m"
-    delete = "30m"
+    create = "60m"
+    update = "60m"
+    delete = "60m"
   }
 
   dynamic "node_config" {
@@ -90,11 +90,18 @@ resource "google_container_cluster" "primary" {
 
   # 2. Private Cluster Setup (Connects the Master /28)
   dynamic "private_cluster_config" {
-    for_each = var.gke.master_cidr != null ? [1] : []
+    for_each = var.gke.private_cluster != null ? [1] : []
     content {
       enable_private_nodes    = true
-      enable_private_endpoint = false
-      master_ipv4_cidr_block  = var.gke.master_cidr
+      enable_private_endpoint = var.gke.private_cluster.enable_private_endpoint
+      master_ipv4_cidr_block  = var.gke.private_cluster.master_cidr
+
+      dynamic "master_global_access_config" {
+        for_each = var.gke.private_cluster.master_global_access ? [1] : []
+        content {
+          enabled = true
+        }
+      }
     }
   }
 
