@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 
 def test_clusters_provisioned(tf_stack):
-    endpoints = tf_stack.search_state("outputs.endpoints.value")
+    endpoints = tf_stack.search_state("values.outputs.endpoints.value")
     assert endpoints is not None, "No endpoints output found in state"
     assert "pub-cluster-01" in endpoints, "Public cluster missing from endpoints"
     assert endpoints["pub-cluster-01"] != "", "Public cluster endpoint is empty"
