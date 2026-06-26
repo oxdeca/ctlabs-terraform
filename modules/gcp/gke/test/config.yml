@@ -1,21 +1,79 @@
 # -----------------------------------------------------------------------------
-# File: ctlabs-terraform/gke/test/config.yml
+# File: ctlabs-terraform/modules/gcp/gke/test/config.yml
 # -----------------------------------------------------------------------------
 
 gke:
-  project: ctlabs-prj-2025101601
-  services:
-    - container.googleapis.com
-  location: us-central1-a
-  name: dev-cluster-01
-  network: default
-  subnetwork: default
-  node_pools:
-    - name: system-pool
-      machine_type: e2-medium
-      node_count: 1
-      disk_size_gb: 20
-    - name: apps-pool
-      machine_type: e2-standard-2
-      node_count: 2
-      disk_size_gb: 50
+  - project   : ctlabs-prj-2025101601
+    location  : us-east1-b
+    name      : pub-cluster-01
+    network   : gke-pub-vpc
+    subnetwork: gke-pub-subnet
+    pods_range_name: pods
+    svcs_range_name: svcs
+
+    node_pools:
+      - name        : system-pool
+        machine_type: e2-medium
+        node_count  : 1
+        disk_size_gb: 20
+
+      - name        : apps-pool
+        machine_type: e2-standard-2
+        node_count  : 2
+        disk_size_gb: 50
+
+      - name        : win-pool
+        machine_type: e2-standard-2
+        node_count  : 1
+        disk_size_gb: 50
+        image_type  : WINDOWS_LTSC_CONTAINERD
+        windows_os_version: OS_VERSION_LTSC2022
+
+  - project   : ctlabs-prj-2025101601
+    location  : us-east1-d
+    name      : prv-cluster-01
+    network   : gke-prv-vpc
+    subnetwork: gke-prv-subnet
+    pods_range_name: pods
+    svcs_range_name: svcs
+
+    private_cluster:
+      master_cidr: 172.16.0.0/28
+
+    node_pools:
+      - name        : default-pool
+        machine_type: e2-small
+        node_count  : 1
+
+vpc:
+  - name          : gke-pub-vpc
+    desc          : VPC for GKE public cluster
+    auto_subnets  : false
+    routing       : REGIONAL
+    mtu           : 1460
+    subnets:
+      - name          : gke-pub-subnet
+        region        : us-east1
+        cidr          : 10.0.0.0/24
+        private_access: true
+        ranges:
+          - name: pods
+            cidr: 10.1.0.0/21
+          - name: svcs
+            cidr: 10.2.0.0/24
+
+  - name          : gke-prv-vpc
+    desc          : VPC for GKE private cluster
+    auto_subnets  : false
+    routing       : REGIONAL
+    mtu           : 1460
+    subnets:
+      - name          : gke-prv-subnet
+        region        : us-east1
+        cidr          : 10.10.0.0/24
+        private_access: true
+        ranges:
+          - name: pods
+            cidr: 10.11.0.0/24
+          - name: svcs
+            cidr: 10.12.0.0/26

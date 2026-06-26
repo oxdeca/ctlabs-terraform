@@ -9,13 +9,35 @@ locals {
     }
     sa_prefix = "gke-"
   }
+  services = [
+    "container.googleapis.com",
+    "compute.googleapis.com",
+  ]
+
+  # Detect OS types across node pools
+  has_linux   = anytrue([for p in var.gke.node_pools : !strcontains(coalesce(p.image_type, ""), "WINDOWS")])
+  has_windows = anytrue([for p in var.gke.node_pools : strcontains(coalesce(p.image_type, ""), "WINDOWS")])
+
+  # Ensure at least one Linux pool exists when Windows pools are defined.
+  # GKE requires a Linux node pool to host system components.
+  default_linux_pool = {
+    name               = "default-pool"
+    machine_type       = "e2-medium"
+    node_count         = 1
+    disk_size_gb       = 20
+    disk_type          = "pd-standard"
+    max_pods_per_node  = 32
+    image_type         = "COS_CONTAINERD"
+    windows_os_version = null
+  }
+  effective_node_pools = local.has_linux ? var.gke.node_pools : concat(var.gke.node_pools, [local.default_linux_pool])
 }
 
 module "services" {
   source = "../services"
 
-  services = var.gke.services
-  project  = var.gke.project
+  services = local.services
+  project  = { id = var.gke.project }
 }
 
 # -----------------------------------------------------------------------------
@@ -33,21 +55,21 @@ resource "google_service_account" "sa" {
 # GKE Control Plane (Cluster)
 # -----------------------------------------------------------------------------
 resource "google_container_cluster" "primary" {
-  name                     = var.gke.name
-  location                 = var.gke.location
-  project                  = var.gke.project
-  network                  = var.gke.network
-  subnetwork               = var.gke.subnetwork
-  enable_autopilot         = var.gke.autopilot ? true : null
-  remove_default_node_pool = var.gke.autopilot ? null : true
-  initial_node_count       = var.gke.autopilot ? null : 1
-  deletion_protection      = var.gke.deletion_protection
+  name                      = var.gke.name
+  location                  = var.gke.location
+  project                   = var.gke.project
+  network                   = var.gke.network
+  subnetwork                = var.gke.subnetwork
+  enable_autopilot          = var.gke.autopilot ? true : null
+  remove_default_node_pool  = var.gke.autopilot ? null : true
+  initial_node_count        = var.gke.autopilot ? null : 1
   default_max_pods_per_node = var.gke.autopilot ? null : 32
+  deletion_protection       = var.gke.deletion_protection
 
   timeouts {
-    create = "30m"
-    update = "30m"
-    delete = "30m"
+    create = "60m"
+    update = "60m"
+    delete = "60m"
   }
 
   dynamic "node_config" {
@@ -68,11 +90,18 @@ resource "google_container_cluster" "primary" {
 
   # 2. Private Cluster Setup (Connects the Master /28)
   dynamic "private_cluster_config" {
-    for_each = var.gke.master_cidr != null ? [1] : []
+    for_each = var.gke.private_cluster != null ? [1] : []
     content {
       enable_private_nodes    = true
-      enable_private_endpoint = false
-      master_ipv4_cidr_block  = var.gke.master_cidr
+      enable_private_endpoint = var.gke.private_cluster.enable_private_endpoint
+      master_ipv4_cidr_block  = var.gke.private_cluster.master_cidr
+
+      dynamic "master_global_access_config" {
+        for_each = var.gke.private_cluster.master_global_access ? [1] : []
+        content {
+          enabled = true
+        }
+      }
     }
   }
 
@@ -81,8 +110,11 @@ resource "google_container_cluster" "primary" {
 # -----------------------------------------------------------------------------
 # GKE Managed Node Pools
 # -----------------------------------------------------------------------------
-resource "google_container_node_pool" "pools" {
-  for_each = { for pool in var.gke.node_pools : pool.name => pool }
+resource "google_container_node_pool" "linux_pools" {
+  for_each = {
+    for pool in local.effective_node_pools : pool.name => pool
+    if !strcontains(coalesce(pool.image_type, ""), "WINDOWS")
+  }
 
   name              = each.value.name
   cluster           = google_container_cluster.primary.name
@@ -93,10 +125,47 @@ resource "google_container_node_pool" "pools" {
 
   node_config {
     service_account = google_service_account.sa.email
-    machine_type = each.value.machine_type
-    disk_size_gb = each.value.disk_size_gb
-    disk_type    = each.value.disk_type
+    machine_type    = each.value.machine_type
+    disk_size_gb    = each.value.disk_size_gb
+    disk_type       = each.value.disk_type
+    image_type      = each.value.image_type
   }
+}
+
+resource "google_container_node_pool" "windows_pools" {
+  for_each = {
+    for pool in local.effective_node_pools : pool.name => pool
+    if strcontains(coalesce(pool.image_type, ""), "WINDOWS")
+  }
+
+  name              = each.value.name
+  cluster           = google_container_cluster.primary.name
+  location          = var.gke.location
+  project           = var.gke.project
+  node_count        = each.value.node_count
+  max_pods_per_node = each.value.max_pods_per_node
+
+  node_config {
+    service_account = google_service_account.sa.email
+    machine_type    = each.value.machine_type
+    disk_size_gb    = each.value.disk_size_gb
+    disk_type       = each.value.disk_type
+    image_type      = each.value.image_type
+
+    shielded_instance_config {
+      enable_integrity_monitoring = false
+      enable_secure_boot          = false
+    }
+
+    dynamic "windows_node_config" {
+      for_each = each.value.windows_os_version != null ? [1] : []
+      content {
+        osversion = each.value.windows_os_version
+      }
+    }
+  }
+
+  depends_on = [google_container_node_pool.linux_pools]
 }
 
 # -----------------------------------------------------------------------------
