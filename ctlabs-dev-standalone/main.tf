@@ -4,13 +4,13 @@
 # -----------------------------------------------------------------------------
 
 import {
-  to = module.ctlabs-dev-standalone.google_project.prj
+  to = module.ctlabs-dev-standalone.google_project.project
   id = "ctlabs-dev-standalone"
 }
 
 locals {
   vault = {
-    url   = "https://192.168.15.3:8081"
+    url   = "https://192.168.99.5:8200"
     mount = "kvv2"
     tls_verify = false
     secrets = [{
@@ -28,9 +28,9 @@ locals {
 }
 
 module "ctlabs-dev-standalone" {
-  #source = "../../modules/gcp/ctlabs"
+  #source = "../../modules/gcp/project"
   source = "github.com/oxdeca/ctlabs-terraform/modules/gcp/project?ref=main"
-  project  = local.config.project
+  project  = nonsensitive(local.config.project)
 }
 
 module "network" {
