@@ -40,7 +40,8 @@ def tf_stack(tf, is_interactive, vault_auth, wd):
     tf.show_changes()
     tf.apply()
     tf.has_changes = has_changes
+
     yield tf
+    
     tf.cleanup()
-    print("")
     tf.destroy()
