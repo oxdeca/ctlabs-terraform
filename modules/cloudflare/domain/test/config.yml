@@ -1,0 +1,65 @@
+# -----------------------------------------------------------------------------
+# File: ctlabs-terraform/modules/cloudflare/domain/test/config.yml
+# -----------------------------------------------------------------------------
+
+domain:
+  name  : sub1.acedxo.com
+  plan  : free
+  type  : full
+  parent: acedxo.com
+
+  settings:
+    min_tls_version  : 1.2
+    always_use_https : "on"
+    ssl              : strict
+
+    security_header:
+      strict_transport_security:
+        enabled: true
+        nosniff: true
+        preload: true
+        max_age: 31536000
+        include_subdomain: true
+
+dns:
+  - name: '@'
+    type: CAA
+    data:
+      flags: 0
+      tag  : iodef
+      value: mailto:security@acedxo.com
+
+  - name   : c1
+    content: 10.8.45.11
+    proxied: true
+
+  - name   : c2
+    content: 10.8.45.12
+    proxied: true
+
+  - name   : c3
+    content: 10.8.45.13
+    proxied: true
+
+  - name   : c4
+    content: 10.8.45.14
+    proxied: true
+
+  - name   : c5
+    content: 10.8.45.15
+    proxied: true
+
+rulesets:
+  http_request_dynamic_redirect:
+    kind: zone
+    rules:
+      - ref        : winteriscoming
+        description: Enforce HTTPS
+        expression : (not ssl)
+        action     : redirect
+        action_parameters:
+          from_value:
+            preserve:query_string: true
+            status_code          : 301
+            target_url:
+              expression: concat("https://", http.host, http.request.uri.path)
