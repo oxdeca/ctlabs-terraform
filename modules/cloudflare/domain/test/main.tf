@@ -3,42 +3,23 @@
 # ------------------------------------------------------------------------------
 
 locals {
-  vault = {
-    url   = "https://192.168.99.3:8200"
-    mount = "kvv2"
-    tls_verify = false
-    secrets = [
-      {
-        name = "cloudflare"
-        path = "cloudflare"
-        type = "data"
-      },
-      {
-        name = "cloudflare_provider"
-        path = "cloudflare"
-        type = "ephemeral"
-      }
-    ]
-  }
-
+  # account_id/zone_id are non-secret and injected by conftest.py (TF_VAR_*).
+  # The Cloudflare API token is consumed ephemerally in provider.tf.
   config = yamldecode( templatefile("./config.yml", {
-    id      = module.vault.data_secrets["cloudflare"].account_id
-    zone_id = module.vault.data_secrets["cloudflare"].zone_id
+    id      = var.cloudflare_account_id
+    zone_id = var.cloudflare_zone_id
   }))
-}
-
-module "vault" {
-  source = "github.com/oxdeca/ctlabs-terraform//modules/gcp/vault?ref=main"
-  vault  = local.vault
 }
 
 module "domain" {
   source  = "../"
+  account = { id = var.cloudflare_account_id }
   domain  = local.config.domain
 }
 
 module "dns" {
-  source = "../../dns"
+  source  = "../../dns"
+  account = { id = var.cloudflare_account_id }
   domain = {
     id           = module.domain.id
     name         = local.config.domain.name
@@ -50,6 +31,7 @@ module "dns" {
 
 module "rulesets" {
   source   = "../../rulesets"
+  account  = { id = var.cloudflare_account_id }
   zone_id  = module.domain.id
   rulesets = local.config.rulesets
 }

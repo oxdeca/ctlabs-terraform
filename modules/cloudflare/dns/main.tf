@@ -8,13 +8,13 @@ locals {
       "${r.type}_${r.name}_${replace(var.domain.name, ".", "_")}_${md5(jsonencode({
         name = r.name
         type = r.type
-        conent = coalesce(r.content, try(r.data.value, null), "")
+        content = coalesce(r.content, try(r.data.value, null), "")
       }))}" => r
   }
 }
 
 resource "cloudflare_dns_record" "record" {
-  for_each = local.dns_records
+  for_each = local.dns_record
 
   zone_id  = var.domain.id
   name     = each.value.name
@@ -31,10 +31,8 @@ data "cloudflare_zone" "parent" {
   count = var.domain.parent != null ? 1 : 0
 
   filter = {
-    account = {
-      id = var.account.id
-    }
-    name = var.domain.parent
+    account_id = var.account.id
+    name       = var.domain.parent
   }
 }
 
@@ -44,7 +42,7 @@ resource "cloudflare_dns_record" "delegation" {
   zone_id = data.cloudflare_zone.parent[0].id
   name    = var.domain.name
   type    = "NS"
-  content = var.domain.name_servers[cound.index]
+  content = var.domain.name_servers[count.index]
   ttl     = 300
   comment = "Managed by Terraform: Delegation for ${var.domain.name}"
 }

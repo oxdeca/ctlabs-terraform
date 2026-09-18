@@ -3,14 +3,9 @@
 # ------------------------------------------------------------------------------
 
 variable account {
+  description = "The Cloudflare Account details"
   type = object({
-    id      = string
-    zone_id = string
-    tokens = list(object({
-      name  = string
-      scope = string
-      perms = list(string)
-    }))
+    id = string
   })
 }
 
@@ -24,7 +19,7 @@ variable domain {
     paused        = optional(bool, false)
     universal_ssl = optional(bool, true)
 
-    features      = optional(any {})
-    settings      = optional(any {})
+    features      = optional(map(any), {})
+    settings      = optional(any, {})
   })
 }

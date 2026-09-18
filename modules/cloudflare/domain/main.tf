@@ -31,18 +31,18 @@ resource "cloudflare_zone_subscription" "subscription" {
 # Zone Settings
 # ------------------------------------------------------------------------------
 resource "cloudflare_zone_setting" "settings" {
-  for_each = var.domain.dns_settings
+  for_each = var.domain.settings
 
   zone_id    = cloudflare_zone.domain.id
   setting_id = each.key
-  value      = can(tostring(each.value)) ? tostring(each.value) : jsondecode(each.value)
+  value      = can(tostring(each.value)) ? tostring(each.value) : jsonencode(each.value)
 }
 
 # ------------------------------------------------------------------------------
 # Universal SSL
 # ------------------------------------------------------------------------------
 resource "cloudflare_universal_ssl_setting" "universal_ssl" {
-  zone_id = var.cloudflare_zone.domain.id
+  zone_id = cloudflare_zone.domain.id
   enabled = var.domain.universal_ssl
 }
 

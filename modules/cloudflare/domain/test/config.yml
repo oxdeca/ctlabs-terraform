@@ -3,10 +3,10 @@
 # -----------------------------------------------------------------------------
 
 domain:
-  name  : sub1.acedxo.com
+  name  : sub1-acedxo.com
   plan  : free
   type  : full
-  parent: acedxo.com
+  #parent: acedxo.com
 
   settings:
     min_tls_version  : 1.2
@@ -31,23 +31,23 @@ dns:
 
   - name   : c1
     content: 10.8.45.11
-    proxied: true
+    proxied: false
 
   - name   : c2
     content: 10.8.45.12
-    proxied: true
+    proxied: false
 
   - name   : c3
     content: 10.8.45.13
-    proxied: true
+    proxied: false
 
   - name   : c4
     content: 10.8.45.14
-    proxied: true
+    proxied: false
 
   - name   : c5
     content: 10.8.45.15
-    proxied: true
+    proxied: false
 
 rulesets:
   http_request_dynamic_redirect:
@@ -59,7 +59,7 @@ rulesets:
         action     : redirect
         action_parameters:
           from_value:
-            preserve:query_string: true
+            preserve_query_string: true
             status_code          : 301
             target_url:
               expression: concat("https://", http.host, http.request.uri.path)
