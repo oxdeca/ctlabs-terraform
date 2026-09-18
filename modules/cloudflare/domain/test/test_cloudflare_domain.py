@@ -1,17 +1,93 @@
 # -----------------------------------------------------------------------------
-# File    : ctlabs-terraform/modules/cloudflare/domain/test/test_cf_domain.py
+# File    : ctlabs-terraform/modules/cloudflare/domain/test/test_cloudflare_domain.py
 # License : MIT
+#
+# The token fixtures live here rather than in a conftest.py because they are
+# specific to this suite: a session-scoped Cloudflare token is minted with the
+# account-wide permissions the domain stack needs, stashed in the Vault cubbyhole,
+# and revoked at teardown. Terraform reads it back via an ephemeral
+# vault_generic_secret (see provider.tf) so it never touches state.
 # -----------------------------------------------------------------------------
 
 import os
+from datetime import datetime, timedelta, timezone
+
 import pytest
 import yaml
-from ctlabs_tools.pytest.helper import ConfTest
+from ctlabs_tools.cloudflare              import Cloudflare
+from ctlabs_tools.cloudflare.mixins.tokens import ZONE_SCOPE
+from ctlabs_tools.pytest.helper           import Terraform
+
+# Account-resource token carrying the zone-scoped permissions the domain stack needs.
+# (The zone being managed does not exist yet at mint time, so it must be account-wide.)
+CF_PERMISSIONS = [
+    "Zone Write",
+    "Zone Read",
+    "DNS Write",
+    "DNS Read",
+    "Zone Settings Write",
+    "Zone Settings Read",
+    "SSL and Certificates Write",
+    "SSL and Certificates Read",
+    "Zone Transform Rules Write",
+    "Zone Transform Rules Read",
+    "Dynamic URL Redirects Write",
+    "Dynamic URL Redirects Read",
+]
+
+CUBBYHOLE_PATH = "cloudflare"
+
+
+@pytest.fixture(scope="session")
+def cf_token(vault_auth):
+    """Mint -> stash in cubbyhole -> yield -> clear cubbyhole -> revoke."""
+    secret = vault_auth.read_secret(path="cloudflare", mount_point="kvv2")
+    if not secret:
+        pytest.fail("No Cloudflare credentials at kvv2/cloudflare")
+
+    creator = Cloudflare(
+        token=secret["account_token"],
+        account_id=secret["account_id"],
+        zone_id=secret.get("zone_id", ""),
+        vault=vault_auth,
+    )
+
+    minted = creator.create_scoped_token(
+        name="ctlabs-domain-test",
+        permissions=CF_PERMISSIONS,
+        scope="account",
+        permission_scope=ZONE_SCOPE,
+        expires_on=(datetime.now(timezone.utc) + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    )
+
+    ephemeral = Cloudflare(
+        token=minted["value"],
+        account_id=creator.account_id,
+        zone_id=creator.zone_id,
+        vault=vault_auth,
+    )
+    ephemeral.store_cubbyhole(path=CUBBYHOLE_PATH)
+
+    try:
+        yield minted
+    finally:
+        ephemeral.clear_cubbyhole(path=CUBBYHOLE_PATH)
+        creator.revoke_token(minted["id"])
+
+
+@pytest.fixture(scope="module")
+def tf(is_interactive, vault_auth, wd, cf_token):
+    """Same as the shared `tf` fixture, but guarantees the CF token is minted first."""
+    t = Terraform(wd=wd, interactive=is_interactive, auth_callback=vault_auth.ensure_valid_token)
+    yield t
+    t.cleanup()
+
 
 @pytest.fixture(scope="session")
 def loaded_yaml_config():
     with open("config.yml", "r") as f:
         return yaml.safe_load(f)
+
 
 @pytest.fixture(scope="module")
 def deployed_rulesets(tf_stack):
@@ -26,7 +102,7 @@ def deployed_rulesets(tf_stack):
             phase_name = r["values"].get("phase")
             if phase_name:
                 rulesets_by_phase[phase_name] = r["values"]
-                
+
     return rulesets_by_phase
 
 

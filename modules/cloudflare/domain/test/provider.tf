@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# File: provider.tf
+# File: ctlabs-terraform/modules/cloudflare/domain/test/provider.tf
 # ------------------------------------------------------------------------------
 
 terraform {
@@ -13,10 +13,10 @@ terraform {
   }
 }
 
-# The Cloudflare token is minted by the test session (conftest.py) and stashed in the
-# Vault cubbyhole, which is scoped to the caller's Vault token. Reading it as an
-# ephemeral resource keeps it out of the Terraform state and plan. The Vault provider
-# itself is configured from the standard VAULT_* environment variables.
+# The Cloudflare token is minted by the test module (test_cloudflare_domain.py) and
+# stashed in the Vault cubbyhole, which is scoped to the caller's Vault token. Reading
+# it as an ephemeral resource keeps it out of the Terraform state and plan. The Vault
+# provider is configured from the standard VAULT_* environment variables.
 ephemeral "vault_generic_secret" "cloudflare" {
   path = "cubbyhole/cloudflare"
 }

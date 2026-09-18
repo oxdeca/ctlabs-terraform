@@ -39,7 +39,7 @@ resource "cloudflare_ruleset" "ruleset" {
         request_fields  = r.action_parameters.request_fields  != null ? [for f in r.action_parameters.request_fields  : { name = f }] : null
         response_fields = r.action_parameters.response_fields != null ? [for f in r.action_parameters.response_fields : { name = f }] : null
 
-        overrides = r.action_parameters.overrides != null : {
+        overrides = r.action_parameters.overrides != null ? {
           action            = r.action_parameters.overrides.action
           enabled           = r.action_parameters.overrides.enabled
           sensitivity_level = r.action_parameters.overrides.sensitivity_level
@@ -78,7 +78,7 @@ resource "cloudflare_ruleset" "ruleset" {
         requests_to_origin  = r.ratelimit.requests_to_origin
         mitigation_timeout  = r.ratelimit.mitigation_timeout
         period              = r.ratelimit.period
-        requests_per_period = r.ratelimie.requests_per_period
+        requests_per_period = r.ratelimit.requests_per_period
       } : null
 
       logging = r.logging != null ? {
