@@ -77,16 +77,11 @@ def setup(args):
         f"verification_ttl={args.verification_ttl}",
     ], env)
 
-    print(f"3. Ensuring role '{args.role_name}'")
-    role_args = ["write", f"identity/oidc/role/{args.role_name}", f"key={args.key_name}", f"ttl={args.token_ttl}"]
-    if args.client_id:
-        role_args.append(f"client_id={args.client_id}")
-    else:
-        print(
-            "   WARNING: no --client-id given - Vault will auto-generate a random one, which "
-            "GCP's WIF provider will reject as an audience mismatch. Re-run with --client-id "
-            "<the audience gcp_wif_setup.py prints> once you have it."
-        )
+    print(f"3. Ensuring role '{args.role_name}' (client_id={args.client_id})")
+    role_args = [
+        "write", f"identity/oidc/role/{args.role_name}",
+        f"key={args.key_name}", f"ttl={args.token_ttl}", f"client_id={args.client_id}",
+    ]
     run_vault(role_args, env)
 
     print("4. Reading a test token to confirm claims")
@@ -105,9 +100,10 @@ def setup(args):
         f.write(fetch_jwks(vault_addr, insecure))
 
     print(
-        "\nDone. On the GCP side, run:\n"
+        "\nDone. On the GCP side, run (same --pool-id/--provider-id as used above):\n"
         f"  gcp_wif_setup.py --issuer {claims['iss']} --jwks-file {args.jwks_out} "
-        f"--subject {claims['sub']} --project <your-project>"
+        f"--subject {claims['sub']} --pool-id {args.pool_id} --provider-id {args.provider_id} "
+        f"--project <your-project>"
     )
 
 
@@ -145,14 +141,20 @@ def main():
     parser.add_argument("--key-name", default="gcp-wif-key")
     parser.add_argument("--role-name", default="gcp-wif")
     parser.add_argument("--client-id", default=None, help=(
-        "GCP WIF provider audience string, e.g. "
-        "'//iam.googleapis.com/projects/<num>/locations/global/workloadIdentityPools/<pool>/providers/<provider>' "
-        "(printed by gcp_wif_setup.py). Becomes the token's 'aud' claim - GCP's WIF provider "
-        "rejects tokens whose 'aud' doesn't match its own resource name by default, so without "
-        "this Vault's random client_id will always fail the exchange. If you don't know it yet "
-        "(chicken-and-egg on first setup), omit it and re-run this script once you do - the role "
-        "write is a safe idempotent overwrite."
+        "Full GCP WIF provider audience string to use as-is, e.g. "
+        "'//iam.googleapis.com/projects/<num>/locations/global/workloadIdentityPools/<pool>/providers/<provider>'. "
+        "Prefer --project-number instead (below) unless you already have this exact string - "
+        "it's easy to paste net01's/another host's audience by mistake."
     ))
+    parser.add_argument("--project-number", default=None, help=(
+        "GCP project number (NOT project ID) - look it up any time with "
+        "`gcloud projects describe <project> --format='value(projectNumber)'`, no pool/provider "
+        "need to exist yet. Combined with --pool-id/--provider-id to build the audience string "
+        "automatically, so this script alone can set client_id correctly on the first run - no "
+        "second pass needed once gcp_wif_setup.py has created the pool/provider."
+    ))
+    parser.add_argument("--pool-id", default="ctlabs-vault-pool", help="Must match gcp_wif_setup.py's --pool-id")
+    parser.add_argument("--provider-id", default="vault-provider", help="Must match gcp_wif_setup.py's --provider-id")
     parser.add_argument("--rotation-period", default="24h")
     parser.add_argument("--verification-ttl", default="24h")
     parser.add_argument("--token-ttl", default="10m")
@@ -168,6 +170,18 @@ def main():
     else:
         if not args.issuer:
             sys.exit("--issuer is required (unless --cleanup)")
+        if not args.client_id:
+            if not args.project_number:
+                sys.exit(
+                    "Must pass --client-id (a full audience string) or --project-number "
+                    "(+ optional --pool-id/--provider-id) so client_id can be set correctly. "
+                    "A role with no client_id gets Vault's auto-generated random one, which GCP "
+                    "always rejects as an audience mismatch - this is not optional."
+                )
+            args.client_id = (
+                f"//iam.googleapis.com/projects/{args.project_number}/locations/global/"
+                f"workloadIdentityPools/{args.pool_id}/providers/{args.provider_id}"
+            )
         setup(args)
 
 
