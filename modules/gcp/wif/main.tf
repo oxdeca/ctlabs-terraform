@@ -76,8 +76,8 @@ resource "google_service_account_iam_member" "wif_binding" {
   for_each = toset(var.wif.subjects)
 
   service_account_id = "projects/${var.wif.project}/serviceAccounts/${local.sa_email}"
-  role                = "roles/iam.workloadIdentityUser"
-  member              = "principal://iam.googleapis.com/projects/${data.google_project.this.number}/locations/global/workloadIdentityPools/${var.wif.pool.id}/subject/${each.value}"
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principal://iam.googleapis.com/projects/${data.google_project.this.number}/locations/global/workloadIdentityPools/${var.wif.pool.id}/subject/${each.value}"
 }
 
 output "audience" {
