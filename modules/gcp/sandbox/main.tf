@@ -12,7 +12,7 @@ locals {
 
     #--- pool -------------------------------------------------------------
     pool = {
-      free_name_suffix  = " (free)"          # marker on free pool display names
+      free_name_suffix  = " - free"          # marker on free pool display names (google_project.name charset excludes parens)
       labels            = { state = "free" } # required by the lease/release lifecycle
       budget_thresholds = [0.5, 0.9, 1.0]    # budget alerts at 50% / 90% / 100%
     }
@@ -101,12 +101,12 @@ resource "google_billing_budget" "sandbox" {
   display_name    = "Budget - ${google_folder.sandbox.display_name}"
 
   budget_filter {
-    resource_ancestors = [google_folder.sandbox.folder_id]
+    resource_ancestors = ["folders/${local.sweeper_folder_id}"] # budgetFilter needs the fully-qualified form; google_folder.sandbox.folder_id is bare numeric
   }
 
   amount {
     specified_amount {
-      currency_code = "USD"
+      currency_code = var.sandbox.budget_currency
       units         = tostring(var.sandbox.budget)
     }
   }
@@ -141,7 +141,7 @@ resource "google_service_account" "sweeper" {
 }
 
 resource "google_folder_iam_binding" "sweeper" {
-  count   = local.sweeper_enabled ? 1 : 0
+  count   = local.sweeper_enabled && !var.sandbox.sweeper.skip_folder_grant ? 1 : 0
   folder  = google_folder.sandbox.folder_id
   role    = "roles/editor"
   members = ["serviceAccount:${google_service_account.sweeper[0].email}"]
@@ -157,11 +157,30 @@ resource "google_service_account_iam_binding" "sweeper_self_token_creator" {
   depends_on = [google_project_service.sweeper]
 }
 
+# Cloud Build (the sweeper function's build step) runs as the custom
+# build_config.service_account above, not the project's default compute SA
+# (which may not exist when project.sa_delete = true) - it needs its own
+# grants to read sources, push the built image, and write build logs.
+resource "google_project_iam_member" "sweeper_build" {
+  for_each = local.sweeper_enabled ? toset([
+    "roles/storage.objectViewer",     # read the gcf-v2-sources-* staging bucket
+    "roles/artifactregistry.writer",  # push the built image to the gcf-artifacts repo
+    "roles/logging.logWriter",        # write build/runtime logs (flagged by Cloud Build itself otherwise)
+  ]) : toset([])
+
+  project = local.sweeper_project
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.sweeper[0].email}"
+}
+
 data "archive_file" "sweeper" {
   count       = local.sweeper_enabled ? 1 : 0
   type        = "zip"
-  source_dir          = "${path.module}/functions/sweeper"
-  output_path         = "${path.module}/functions/sweeper/.terraform-archive.zip"
+  source_dir  = "${path.module}/functions/sweeper"
+  # output_path deliberately OUTSIDE source_dir: writing it inside would make
+  # each zip include the previous zip's bytes, changing the hash on every
+  # plan/apply even with no real source changes.
+  output_path = "${path.module}/.terraform-archive-sweeper.zip"
 }
 
 resource "google_storage_bucket" "sweeper_source" {
@@ -191,8 +210,9 @@ resource "google_cloudfunctions2_function" "sweeper" {
   description = local.defaults.sweeper.sa_desc
 
   build_config {
-    runtime     = local.defaults.sweeper.runtime
-    entry_point = local.defaults.sweeper.entry_point
+    runtime         = local.defaults.sweeper.runtime
+    entry_point     = local.defaults.sweeper.entry_point
+    service_account = google_service_account.sweeper[0].name # else GCF falls back to the project's default compute SA, which may not exist (e.g. sa_delete = true)
     source {
       storage_source {
         bucket = google_storage_bucket.sweeper_source[0].name

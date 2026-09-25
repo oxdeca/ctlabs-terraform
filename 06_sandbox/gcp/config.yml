@@ -1,0 +1,54 @@
+---
+
+# -----------------------------------------------------------------------------
+# File        : 06_sandbox/config.yml
+# Description : Sandbox Projects Setup
+# -----------------------------------------------------------------------------
+
+defaults:
+  zone: &default_zone us-east1-c
+  labels: &default_labels
+    ctlabs_created : true
+    owner          : ctlabs_admin
+  spot: &default_spot
+    action : STOP
+    ttl    : 4 # in hours
+  disks: &default_disks
+    boot:
+  network:
+    net1-lan1: &net1_lan1 regions/us-east1/subnetworks/net1-lan1
+    net2-lan1: &net2_lan1 regions/us-east1/subnetworks/net2-lan1
+
+project:
+  name       : ctlabs-security
+  id         : ctlabs-security
+  # deliberately NOT ${folder} - ctlabs-security hosts the SA that
+  # administers the sandbox folder, so it must stay outside that folder's
+  # hierarchy (org-parented directly). Reusing the sandbox folder value here
+  # would let sandbox-folder-scoped IAM reach the admin SA's own project.
+  oid        : ${oid}
+  billing    : ${billing}
+  sa_delete  : true
+  zone       : *default_zone
+  labels     :
+    <<    : *default_labels
+    vpc   : standalone_project
+    ctlabs: service_account_given
+
+sandbox:
+  name    : ctlabs-sandbox
+  fid     : ${folder}
+  billing : ${billing}
+  budget  : 10
+  budget_currency: CAD          # must match the billing account's actual currency
+  projects: 4                   # starter size - billing account 01867A-D09E5D-610FBB has a 5-linked-project quota, already at capacity with ctlabs-security + 4 pool members
+  delete_policy : ABANDON
+  sweeper:                      # optional TTL enforcement
+    project  : ctlabs-security
+    schedule : "0 2 * * *"
+    time_zone: UTC
+    region   : us-central1
+    # terraform-runner can't manage this folder IAM binding itself (needs
+    # folder GetIamPolicy/SetIamPolicy, deliberately not granted) - done
+    # manually instead via gcloud
+    skip_folder_grant: true

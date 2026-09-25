@@ -5,24 +5,29 @@
 
 variable "sandbox" {
   type = object({
-    name    = string                      # (*) folder display name (e.g. sandbox)
-    billing = string                      # (*) existing billing account id; linked once to every pool project at creation
-    budget  = optional(number, 100)       # (?) folder-scoped budget limit in USD (covers all pool members)
-    oid     = optional(string)            # (|) organization id (either oid or fid MUST be set)
-    fid     = optional(string)            # (|) parent folder id
-    iam_bindings = optional(list(object({ # (?) extra bindings applied on the sandbox folder
+    name            = string                  # (*) folder display name (e.g. sandbox)
+    billing         = string                  # (*) existing billing account id; linked once to every pool project at creation
+    budget          = optional(number, 100)   # (?) folder-scoped budget limit (covers all pool members)
+    budget_currency = optional(string, "USD") # (?) must match the billing account's actual currency, or budget creation 400s
+    oid             = optional(string)        # (|) organization id (either oid or fid MUST be set)
+    fid             = optional(string)        # (|) parent folder id
+    iam_bindings = optional(list(object({     # (?) extra bindings applied on the sandbox folder
       role    = string
       members = list(string)
     })), [])
     projects       = optional(number, 5)              # (?) number of leasable sandbox projects in the pool
     project_prefix = optional(string, "sandbox-pool") # (?) pool project id prefix; members are <prefix>-01..NN (max ~20 chars)
     pool_labels    = optional(map(string), {})        # (?) extra labels merged onto every pool project (state label is always forced)
-    delete_policy  = optional(string, "PREVENT")      # (?) google_project deletion_policy for pool members (PREVENT keeps the pool intact)
+    delete_policy  = optional(string, "ABANDON")      # (?) google_project deletion_policy for pool members (ABANDON: state-only destroy, real project survives; PREVENT blocks `terraform destroy` outright)
     sweeper = optional(object({                       # (?) TTL sweeper: Cloud Scheduler -> Cloud Function that disables services
-      project   = string                              #     and marks expired leases 'disabled'. null = no sweeper.
-      schedule  = optional(string, "0 2 * * *")       # (?) cron schedule (default: daily 02:00 UTC)
-      time_zone = optional(string, "UTC")             # (?) scheduler time zone
-      region    = optional(string, "us-central1")     # (?) GCP region hosting the sweeper function + scheduler
+      project           = string                      #     and marks expired leases 'disabled'. null = no sweeper.
+      schedule          = optional(string, "0 2 * * *") # (?) cron schedule (default: daily 02:00 UTC)
+      time_zone         = optional(string, "UTC")     # (?) scheduler time zone
+      region            = optional(string, "us-central1") # (?) GCP region hosting the sweeper function + scheduler
+      skip_folder_grant = optional(bool, false)       # (?) skip the folder-level roles/editor grant to the sweeper SA - set true
+                                                       #     if the bootstrap identity lacks folder GetIamPolicy/SetIamPolicy
+                                                       #     (by design - see README "One-time admin permissions") and the
+                                                       #     grant was made manually instead
     }), null)
   })
 
